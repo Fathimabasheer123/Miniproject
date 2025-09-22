@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - QuizGen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f9fafc 0%, #f1f5f9 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #334155;
+        }
+        
+        /* QuizGen Logo - Outside the container */
+        .quizgen-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 700;
+            color: #4b0b76;
+            text-decoration: none;
+            margin-bottom: 30px;
+        }
+        
+        .quizgen-logo i {
+            margin-right: 10px;
+            font-size: 32px;
+        }
+        
+        /* Login Container */
+        .login-container {
+            width: 100%;
+            max-width: 450px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+        
+        .login-header {
+            background: linear-gradient(90deg, #4b0b76, #6a1b9a);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+        
+        .login-header h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        /* Form Styling */
+        .login-form {
+            padding: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        .input-with-icon {
+            position: relative;
+        }
+        
+        .input-with-icon i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+        }
+        
+        .input-with-icon input {
+            width: 100%;
+            padding: 14px 14px 14px 45px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .input-with-icon input:focus {
+            outline: none;
+            border-color: #4b0b76;
+            box-shadow: 0 0 0 3px rgba(75, 11, 118, 0.1);
+        }
+        
+        /* Error Message Styling */
+        .error-message {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .error-message i {
+            font-size: 18px;
+        }
+        
+        /* Button Styling */
+        .login-btn {
+            width: 100%;
+            background: linear-gradient(90deg, #4b0b76, #6a1b9a);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+            box-shadow: 0 4px 6px rgba(75, 11, 118, 0.2);
+        }
+        
+        .login-btn:hover {
+            background: linear-gradient(90deg, #3a095c, #4a148c);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(75, 11, 118, 0.3);
+        }
+        
+        .login-btn:active {
+            transform: translateY(0);
+        }
+        
+        /* Forgot Password Link */
+        .forgot-password {
+            text-align: right;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .forgot-password a {
+            color: #6b7280;
+            text-decoration: none;
+            font-size: 14px;
+            transition: 0.3s;
+        }
+        
+        .forgot-password a:hover {
+            color: #4b0b76;
+            text-decoration: underline;
+        }
+        
+        /* Register Link */
+        .register-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 15px;
+            color: #6b7280;
+        }
+        
+        .register-link a {
+            color: #4b0b76;
+            text-decoration: none;
+            font-weight: 500;
+            transition: 0.3s;
+        }
+        
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-header h3 {
+            color: #4b0b76;
+            font-weight: 600;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #6b7280;
+        }
+        
+        .modal-form {
+            margin-top: 20px;
+        }
+        
+        .modal-btn {
+            background: linear-gradient(90deg, #4b0b76, #6a1b9a);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 15px;
+        }
+        
+        .success-message {
+            background-color: #d1fae5;
+            color: #065f46;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 480px) {
+            .login-container {
+                border-radius: 12px;
+            }
+            
+            .login-header {
+                padding: 20px;
+            }
+            
+            .login-form {
+                padding: 25px 20px;
+            }
+            
+            .quizgen-logo {
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+            
+            .quizgen-logo i {
+                font-size: 28px;
+            }
+            
+            .modal-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- QuizGen Logo - Outside the container -->
+    <a href="{{ url_for('routes.index') }}" class="quizgen-logo">
+        <i class="fas fa-book-open"></i> QuizGen
+    </a>
+    
+    <div class="login-container">
+        <div class="login-header">
+            <h2>Login</h2>
+        </div>
+        
+        <div class="login-form">
+            {% if error %}
+                <div class="error-message">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>{{ error }}</span>
+                </div>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('routes.login') }}">
+                <div class="form-group">
+                    <label for="email">Username or Email</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="email" name="email" placeholder="Enter your username or email" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                    </div>
+                </div>
+                
+                <button type="submit" class="login-btn">Login</button>
+                
+                <!-- Forgot Password Link -->
+                <div class="forgot-password">
+                    <a href="#" id="forgotPasswordLink">Forgot Password?</a>
+                </div>
+            </form>
+            
+            <div class="register-link">
+                <p>Don't have an account? <a href="{{ url_for('routes.register') }}">Register here</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div class="modal" id="forgotPasswordModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Reset Password</h3>
+                <button class="close-btn">&times;</button>
+            </div>
+            <p>Enter your email address and we'll send you instructions to reset your password.</p>
+            <div class="modal-form">
+                <div class="form-group">
+                    <label for="reset-email">Email Address</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="reset-email" placeholder="Enter your email address" required>
+                    </div>
+                </div>
+                <button class="modal-btn" id="resetPasswordBtn">Send Reset Instructions</button>
+                <div class="success-message" id="resetSuccessMessage">
+                    <i class="fas fa-check-circle"></i> Password reset instructions have been sent to your email.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Forgot Password Modal Functionality
+        const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+        const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+        const closeBtn = document.querySelector('.close-btn');
+        const resetPasswordBtn = document.getElementById('resetPasswordBtn');
+        const resetSuccessMessage = document.getElementById('resetSuccessMessage');
+
+        forgotPasswordLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            forgotPasswordModal.style.display = 'flex';
+        });
+
+        closeBtn.addEventListener('click', function() {
+            forgotPasswordModal.style.display = 'none';
+            resetSuccessMessage.style.display = 'none';
+        });
+
+        window.addEventListener('click', function(e) {
+            if (e.target === forgotPasswordModal) {
+                forgotPasswordModal.style.display = 'none';
+                resetSuccessMessage.style.display = 'none';
+            }
+        });
+
+        resetPasswordBtn.addEventListener('click', function() {
+            const email = document.getElementById('reset-email').value;
+            
+            if (!email) {
+                alert('Please enter your email address');
+                return;
+            }
+            
+            // Here you would typically make an API call to your backend
+            // For now, we'll simulate a successful request
+            resetSuccessMessage.style.display = 'flex';
+            
+            // Hide success message after 3 seconds and close modal
+            setTimeout(function() {
+                resetSuccessMessage.style.display = 'none';
+                forgotPasswordModal.style.display = 'none';
+            }, 3000);
+        });
+    </script>
+</body>
+</html>

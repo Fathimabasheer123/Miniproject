@@ -1,0 +1,16 @@
+Flask==2.3.3
+Werkzeug==2.3.7
+flask-caching
+transformers
+torch
+sentence-transformers
+nltk
+PyPDF2
+python-pptx
+reportlab
+fpdf
+word2number
+inflect
+Flask-SQLAlchemy==3.0.5
+Flask-Migrate==4.0.5
+Flask-Login==0.6.2

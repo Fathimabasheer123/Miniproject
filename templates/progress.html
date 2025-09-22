@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Progress - QuizGen</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #4b0b76;
+      --secondary-color: #6a1b9a;
+      --accent-color: #8e44ad;
+      --light-bg: #f4f7fb;
+      --card-bg: #ffffff;
+      --text-color: #334155;
+      --text-light: #64748b;
+      --success-color: #10b981;
+      --warning-color: #f59e0b;
+      --info-color: #0ea5e9;
+    }
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--light-bg);
+      color: var(--text-color);
+      margin: 0;
+      padding: 0;
+    }
+
+    .dashboard-container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar Styles */
+    .sidebar {
+      width: 250px;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 20px 0;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+    }
+    
+    .sidebar-header {
+      padding: 0 20px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 20px;
+    }
+    
+    .sidebar-header h3 {
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .sidebar-menu {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .sidebar-menu li {
+      margin-bottom: 5px;
+    }
+    
+    .sidebar-menu a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: white;
+      padding: 12px 20px;
+      text-decoration: none;
+      transition: all 0.3s;
+      border-left: 4px solid transparent;
+    }
+    
+    .sidebar-menu a:hover, .sidebar-menu a.active {
+      background: rgba(255, 255, 255, 0.1);
+      border-left: 4px solid white;
+    }
+    
+    .sidebar-menu i {
+      width: 20px;
+      text-align: center;
+    }
+
+    /* Main Content Styles */
+    .main-content {
+      flex: 1;
+      margin-left: 250px;
+      padding: 30px;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .welcome-text h2 {
+      font-weight: 600;
+      color: var(--primary-color);
+      margin-bottom: 5px;
+    }
+    
+    .welcome-text p {
+      color: var(--text-light);
+      margin: 0;
+    }
+    
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--primary-color);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+    }
+
+    /* Card Styles */
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      border: none;
+      margin-bottom: 25px;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .card-header {
+      background: transparent;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 20px;
+      font-weight: 600;
+      color: var(--primary-color);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .card-body {
+      padding: 20px;
+    }
+
+    /* Stats Section */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .stat-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 15px;
+      font-size: 20px;
+    }
+    
+    .stat-icon.quizzes {
+      background: rgba(79, 70, 229, 0.1);
+      color: #4f46e5;
+    }
+    
+    .stat-icon.score {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success-color);
+    }
+    
+    .stat-icon.created {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--warning-color);
+    }
+    
+    .stat-icon.streak {
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+    }
+    
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+    
+    .stat-label {
+      color: var(--text-light);
+      font-size: 14px;
+    }
+
+    /* Progress Section */
+    .progress-container {
+      margin-bottom: 30px;
+    }
+    
+    .progress-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+    
+    .progress-title {
+      font-weight: 600;
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .progress-bar-container {
+      background: #e5e7eb;
+      border-radius: 10px;
+      height: 10px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    
+    .progress-bar {
+      height: 100%;
+      border-radius: 10px;
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    }
+    
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      color: var(--text-light);
+    }
+
+    /* Score History Chart */
+    .chart-container {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      margin-bottom: 30px;
+      height: 300px;
+    }
+    
+    .chart-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--text-light);
+      flex-direction: column;
+    }
+    
+    .chart-placeholder i {
+      font-size: 48px;
+      margin-bottom: 15px;
+    }
+
+    /* Quiz History */
+    .quiz-history {
+      margin-bottom: 30px;
+    }
+    
+    .quiz-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .quiz-item:last-child {
+      border-bottom: none;
+    }
+    
+    .quiz-info h4 {
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+    
+    .quiz-meta {
+      display: flex;
+      gap: 15px;
+      color: var(--text-light);
+      font-size: 14px;
+    }
+    
+    .quiz-date {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .quiz-score {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .score-value {
+      font-weight: 600;
+      color: var(--success-color);
+    }
+    
+    .view-quiz {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .view-quiz:hover {
+      text-decoration: underline;
+    }
+
+    /* Achievements */
+    .badges-container {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    
+    .badge {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      position: relative;
+    }
+    
+    .badge.locked {
+      background: #e5e7eb;
+      color: #9ca3af;
+    }
+    
+    .badge-tooltip {
+      position: absolute;
+      bottom: -40px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #374151;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 10;
+    }
+    
+    .badge:hover .badge-tooltip {
+      opacity: 1;
+    }
+    
+    .achievement-progress {
+      margin-top: 20px;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 992px) {
+      .sidebar {
+        width: 200px;
+      }
+      
+      .main-content {
+        margin-left: 200px;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .dashboard-container {
+        flex-direction: column;
+      }
+      
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+      }
+      
+      .main-content {
+        margin-left: 0;
+      }
+      
+      .sidebar-menu {
+        display: flex;
+        overflow-x: auto;
+        padding-bottom: 10px;
+      }
+      
+      .sidebar-menu li {
+        flex-shrink: 0;
+        margin-bottom: 0;
+      }
+      
+      .sidebar-menu a {
+        border-left: none;
+        border-bottom: 4px solid transparent;
+        padding: 10px 15px;
+      }
+      
+      .sidebar-menu a:hover, .sidebar-menu a.active {
+        border-left: none;
+        border-bottom: 4px solid white;
+      }
+      
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .quiz-meta {
+        flex-direction: column;
+        gap: 5px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h3><i class="fas fa-book-open"></i> QuizGen</h3>
+      </div>
+      <ul class="sidebar-menu">
+        <li><a href="{{ url_for('routes.dashboard') }}"><i class="fas fa-home"></i> Dashboard</a></li>
+        <li><a href="#" onclick="showSection('uploadSection')"><i class="fas fa-file-upload"></i> Upload Notes</a></li>
+        <li><a href="{{ url_for('routes.progress') }}" class="active"><i class="fas fa-chart-line"></i> Progress</a></li>
+        <li><a href="{{ url_for('routes.history') }}"><i class="fas fa-history"></i> History</a></li>
+        <li><a href="{{ url_for('routes.settings') }}"><i class="fas fa-cog"></i> Settings</a></li>
+        <li><a href="{{ url_for('routes.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+      </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="header">
+        <div class="welcome-text">
+          <h2>Your Progress, {{ session['user'] }}</h2>
+          <p>Track your learning journey and achievements</p>
+        </div>
+        <div class="user-info">
+          <div class="user-avatar">{{ session['user'][0]|upper }}</div>
+          <span>{{ session['user'] }}</span>
+        </div>
+      </div>
+
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+              <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }}"></i> 
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <!-- Stats Section -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon quizzes">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div class="stat-value">{{ stats.quizzes_completed }}</div>
+          <div class="stat-label">Quizzes Completed</div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon score">
+            <i class="fas fa-chart-line"></i>
+          </div>
+          <div class="stat-value">{{ stats.average_score }}%</div>
+          <div class="stat-label">Average Score</div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon created">
+            <i class="fas fa-plus-circle"></i>
+          </div>
+          <div class="stat-value">{{ stats.quizzes_created }}</div>
+          <div class="stat-label">Quizzes Created</div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon streak">
+            <i class="fas fa-fire"></i>
+          </div>
+          <div class="stat-value">{{ stats.days_streak }}</div>
+          <div class="stat-label">Day Streak</div>
+        </div>
+      </div>
+
+      <!-- Progress Section -->
+      <div class="progress-container">
+        <div class="progress-card">
+          <div class="progress-title">
+            <span>Your Learning Progress</span>
+            <span>{{ stats.progress_percentage }}% Complete</span>
+          </div>
+          <div class="progress-bar-container">
+            <div class="progress-bar" style="width: {{ stats.progress_percentage }}%"></div>
+          </div>
+          <div class="progress-info">
+            <span>{{ stats.quizzes_completed }} of {{ stats.quizzes_goal }} quizzes completed</span>
+            <span>{{ stats.days_streak }} day streak</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Score History Chart -->
+      <div class="chart-container">
+        <div class="card-header">
+          <i class="fas fa-chart-bar"></i> Score History
+        </div>
+        <div class="chart-placeholder">
+          <i class="fas fa-chart-line"></i>
+          <p>Score history chart will be displayed here</p>
+          <small class="text-muted">Visualization of your performance over time</small>
+        </div>
+      </div>
+      <div class="chart-container">
+    <div class="card-header">
+        <i class="fas fa-chart-line"></i> Progress Over Time
+    </div>
+    <div class="card-body">
+        <canvas id="progressChart" height="100"></canvas>
+    </div>
+</div>
+
+      <!-- Recent Quiz History -->
+      <div class="quiz-history">
+        <div class="card">
+          <div class="card-header">
+            <i class="fas fa-history"></i> Recent Quiz Attempts
+          </div>
+          <div class="card-body">
+            {% if recent_quizzes %}
+              {% for quiz in recent_quizzes %}
+                <div class="quiz-item">
+                  <div class="quiz-info">
+                    <h4>{{ quiz.title }}</h4>
+                    <div class="quiz-meta">
+                      <div class="quiz-date">
+                        <i class="far fa-calendar"></i> {{ quiz.date }}
+                      </div>
+                      <div class="quiz-score">
+                        <i class="fas fa-star"></i> Score: <span class="score-value">{{ quiz.score }}%</span>
+                      </div>
+                    </div>
+                  </div>
+                  <a href="#" class="view-quiz">View Details</a>
+                </div>
+              {% endfor %}
+            {% else %}
+              <p class="text-center text-muted">No quiz attempts yet. Complete your first quiz to see your progress here!</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Achievements Section -->
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-trophy"></i> Achievements
+        </div>
+        <div class="card-body">
+          <div class="badges-container">
+            <div class="badge {% if stats.achievements.first_quiz %}earned{% else %}locked{% endif %}">
+              <i class="fas fa-star"></i>
+              <div class="badge-tooltip">First Quiz Completed</div>
+            </div>
+            
+            <div class="badge {% if stats.achievements.quiz_master %}earned{% else %}locked{% endif %}">
+              <i class="fas fa-crown"></i>
+              <div class="badge-tooltip">Quiz Master (10 quizzes)</div>
+            </div>
+            
+            <div class="badge {% if stats.achievements.perfect_score %}earned{% else %}locked{% endif %}">
+              <i class="fas fa-check-double"></i>
+              <div class="badge-tooltip">Perfect Score (100%)</div>
+            </div>
+            
+            <div class="badge {% if stats.achievements.streak_7 %}earned{% else %}locked{% endif %}">
+              <i class="fas fa-fire"></i>
+              <div class="badge-tooltip">7-Day Streak</div>
+            </div>
+            
+            <div class="badge {% if stats.achievements.streak_30 %}earned{% else %}locked{% endif %}">
+              <i class="fas fa-calendar"></i>
+              <div class="badge-tooltip">30-Day Streak</div>
+            </div>
+            
+            <div class="badge {% if stats.achievements.quick_learner %}earned{% else %}locked{% endif %}">
+              <i class="fas fa-bolt"></i>
+              <div class="badge-tooltip">Quick Learner (80%+ avg)</div>
+            </div>
+          </div>
+          
+          <div class="achievement-progress">
+            <p class="mb-1"><strong>Achievement Progress:</strong> {{ stats.achievements.earned }}/{{ stats.achievements.total }} badges earned</p>
+            <div class="progress" style="height: 10px;">
+              <div class="progress-bar" style="width: {{ (stats.achievements.earned / stats.achievements.total) * 100 }}%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    // Progress chart
+    const ctx = document.getElementById('progressChart').getContext('2d');
+    const progressChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6'],
+            datasets: [{
+                label: 'Your Score',
+                data: [65, 75, 70, 80, 85, 90],
+                borderColor: '#4b0b76',
+                tension: 0.1,
+                fill: false
+            }, {
+                label: 'Average Score',
+                data: [60, 65, 63, 70, 75, 78],
+                borderColor: '#6a1b9a',
+                borderDash: [5, 5],
+                tension: 0.1,
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    min: 50,
+                    max: 100
+                }
+            }
+        }
+    });
+    // Simple function to toggle sections if needed
+    function showSection(sectionId) {
+      // This function can be expanded if needed for the progress page
+      console.log("Showing section: " + sectionId);
+    }
+    
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+      var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+      var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+      })
+    });
+    
+  </script>
+</body>
+</html>

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Attempt Details - QuizGen</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4b0b76;
+            --secondary-color: #6a1b9a;
+            --light-bg: #f4f7fb;
+            --card-bg: #ffffff;
+            --text-color: #334155;
+            --text-light: #64748b;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--light-bg);
+            color: var(--text-color);
+            padding: 20px;
+        }
+        
+        .details-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .details-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .details-header h1 {
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .score-display {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .score-value {
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .score-text {
+            font-size: 18px;
+            color: var(--text-light);
+        }
+        
+        .question-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+            overflow: hidden;
+            padding: 20px;
+            border-left: 4px solid #ddd;
+        }
+        
+        .question-card.correct {
+            border-left-color: var(--success-color);
+        }
+        
+        .question-card.incorrect {
+            border-left-color: var(--danger-color);
+        }
+        
+        .question-number {
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .question-text {
+            font-weight: 500;
+            margin-bottom: 15px;
+        }
+        
+        .options-list {
+            margin-bottom: 15px;
+        }
+        
+        .option-item {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: #f9f9f9;
+        }
+        
+        .option-item.correct {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--success-color);
+        }
+        
+        .option-item.incorrect {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: var(--danger-color);
+        }
+        
+        .option-item.selected {
+            background: rgba(75, 11, 118, 0.1);
+            border-color: var(--primary-color);
+        }
+        
+        .answer-feedback {
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        
+        .feedback-correct {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+        }
+        
+        .feedback-incorrect {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+        }
+        
+        .back-btn {
+            margin-bottom: 20px;
+        }
+        
+        .summary-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+            overflow: hidden;
+            padding: 20px;
+        }
+        
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .summary-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .score-value {
+                font-size: 36px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="details-container">
+        <div class="back-btn">
+            <a href="{{ url_for('routes.history') }}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left"></i> Back to History
+            </a>
+        </div>
+        
+        <div class="details-header">
+            <h1><i class="fas fa-info-circle"></i> Quiz Attempt Details</h1>
+            <p>Review your performance on this quiz</p>
+        </div>
+
+        <div class="score-display">
+            <div class="score-value">{{ attempt.score }}/{{ attempt.total_questions }}</div>
+            <div class="score-text">{{ "%.1f"|format(score_percentage) }}% Correct</div>
+        </div>
+
+        <div class="summary-card">
+            <h3 class="mb-4"><i class="fas fa-list-alt"></i> Quiz Summary</h3>
+            
+            <div class="summary-item">
+                <strong>Quiz Title:</strong>
+                <span>{{ attempt.title }}</span>
+            </div>
+            
+            <div class="summary-item">
+                <strong>Date Completed:</strong>
+                <span>{{ attempt.formatted_date if attempt.formatted_date else "Unknown date" }}</span>
+            </div>
+            
+            <div class="summary-item">
+                <strong>Score:</strong>
+                <span>{{ attempt.score }}/{{ attempt.total_questions }} ({{ "%.1f"|format(score_percentage) }}%)</span>
+            </div>
+            
+            <div class="summary-item">
+                <strong>Time Spent:</strong>
+                <span>Not recorded</span>
+            </div>
+        </div>
+
+        <h3 class="mb-4"><i class="fas fa-question-circle"></i> Question Review</h3>
+        
+        {% for question in questions %}
+            <div class="question-card {% if question.is_correct %}correct{% else %}incorrect{% endif %}">
+                <div class="question-number">Question {{ loop.index }}</div>
+                <div class="question-text">{{ question.question_text }}</div>
+                
+                <div class="options-list">
+                    {% for option in question.options %}
+                        <div class="option-item 
+                            {% if option == question.answer %}correct{% endif %}
+                            {% if option == question.user_answer and not question.is_correct %}incorrect{% endif %}
+                            {% if option == question.user_answer %}selected{% endif %}">
+                            {{ option }}
+                            {% if option == question.answer %}
+                                <i class="fas fa-check-circle float-end text-success"></i>
+                            {% elif option == question.user_answer and not question.is_correct %}
+                                <i class="fas fa-times-circle float-end text-danger"></i>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="answer-feedback {% if question.is_correct %}feedback-correct{% else %}feedback-incorrect{% endif %}">
+                    {% if question.is_correct %}
+                        <i class="fas fa-check"></i> Correct! Your answer was right.
+                    {% else %}
+                        <i class="fas fa-times"></i> Incorrect. The right answer is: <strong>{{ question.answer }}</strong>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        // Simple animation for question cards
+        document.addEventListener('DOMContentLoaded', function() {
+            const questionCards = document.querySelectorAll('.question-card');
+            
+            questionCards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>  
+</html>

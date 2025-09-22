@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - QuizGen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f9fafc 0%, #f1f5f9 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #334155;
+        }
+        
+        /* QuizGen Logo - Outside the container */
+        .quizgen-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 700;
+            color: #4b0b76;
+            text-decoration: none;
+            margin-bottom: 30px;
+        }
+        
+        .quizgen-logo i {
+            margin-right: 10px;
+            font-size: 32px;
+        }
+        
+        /* Register Container */
+        .register-container {
+            width: 100%;
+            max-width: 450px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+        
+        .register-header {
+            background: linear-gradient(90deg, #4b0b76, #6a1b9a);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+        
+        .register-header h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        /* Form Styling */
+        .register-form {
+            padding: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        .input-with-icon {
+            position: relative;
+        }
+        
+        .input-with-icon i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+        }
+        
+        .input-with-icon input {
+            width: 100%;
+            padding: 14px 14px 14px 45px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .input-with-icon input:focus {
+            outline: none;
+            border-color: #4b0b76;
+            box-shadow: 0 0 0 3px rgba(75, 11, 118, 0.1);
+        }
+        
+        /* Error Message Styling */
+        .error-message {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .error-message i {
+            font-size: 18px;
+        }
+        
+        /* Button Styling */
+        .register-btn {
+            width: 100%;
+            background: linear-gradient(90deg, #4b0b76, #6a1b9a);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+            box-shadow: 0 4px 6px rgba(75, 11, 118, 0.2);
+        }
+        
+        .register-btn:hover {
+            background: linear-gradient(90deg, #3a095c, #4a148c);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(75, 11, 118, 0.3);
+        }
+        
+        .register-btn:active {
+            transform: translateY(0);
+        }
+        
+        /* Login Link */
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 15px;
+            color: #6b7280;
+        }
+        
+        .login-link a {
+            color: #4b0b76;
+            text-decoration: none;
+            font-weight: 500;
+            transition: 0.3s;
+        }
+        
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 480px) {
+            .register-container {
+                border-radius: 12px;
+            }
+            
+            .register-header {
+                padding: 20px;
+            }
+            
+            .register-form {
+                padding: 25px 20px;
+            }
+            
+            .quizgen-logo {
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+            
+            .quizgen-logo i {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- QuizGen Logo - Outside the container -->
+    <a href="{{ url_for('routes.index') }}" class="quizgen-logo">
+        <i class="fas fa-book-open"></i> QuizGen
+    </a>
+    
+    <div class="register-container">
+        <div class="register-header">
+            <h2>Register</h2>
+        </div>
+        
+        <div class="register-form">
+            {% if error %}
+                <div class="error-message">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>{{ error }}</span>
+                </div>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('routes.register') }}">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="username" name="username" placeholder="Enter your username" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="password" name="password" placeholder="Create a password" required>
+                    </div>
+                </div>
+                
+                <button type="submit" class="register-btn">Register</button>
+            </form>
+            
+            <div class="login-link">
+                <p>Already have an account? <a href="{{ url_for('routes.login') }}">Login here</a></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
