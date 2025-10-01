@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Quiz - QuizGen</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+     .file-input {
+    display: none;
+  }
+  
+  .upload-progress {
+    display: none;
+  }
+  
+  .upload-progress.show {
+    display: block;
+  }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h3><i class="fas fa-book-open"></i> QuizGen</h3>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="{{ url_for('quiz.dashboard') }}"><i class="fas fa-home"></i> Dashboard</a></li>
+                <li><a href="{{ url_for('quiz.upload_file') }}" class="active"><i class="fas fa-file-upload"></i> Create Quiz</a></li>
+                <li><a href="{{ url_for('progress.history') }}"><i class="fas fa-history"></i> History</a></li>
+                <li><a href="{{ url_for('progress.progress') }}"><i class="fas fa-chart-line"></i> Progress</a></li>
+                <li><a href="{{ url_for('settings.settings') }}"><i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <div class="welcome-text">
+                    <h2>Create New Quiz</h2>
+                    <p>Upload your study materials and generate AI-powered questions</p>
+                </div>
+                <div class="user-info">
+                    <div class="user-avatar">{{ session['user'][0]|upper }}</div>
+                    <span>{{ session['user'] }}</span>
+                </div>
+            </div>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+                            <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }}"></i> 
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- AI Status Alert -->
+            {% if not gemini_available %}
+            <div class="alert alert-warning d-flex align-items-center" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <div>
+                    <strong>AI Mode Disabled:</strong> Gemini API key not configured. 
+                    <a href="{{ url_for('settings.settings') }}" class="alert-link">Add API key</a> to generate AI-powered questions.
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-success d-flex align-items-center" role="alert">
+                <i class="fas fa-robot me-2"></i>
+                <div>
+                    <strong>AI Mode Enabled:</strong> Ready to generate intelligent questions from your content using Gemini AI.
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="upload-container">
+                <!-- Step Indicator -->
+                <div class="step-indicator">
+                    <div class="step active" id="step1">
+                        <div class="step-number">1</div>
+                        <div class="step-label">Upload File</div>
+                    </div>
+                    <div class="step" id="step2">
+                        <div class="step-number">2</div>
+                        <div class="step-label">Generate Quiz</div>
+                    </div>
+                    <div class="step" id="step3">
+                        <div class="step-number">3</div>
+                        <div class="step-label">Take Quiz</div>
+                    </div>
+                </div>
+
+                <!-- Step 1: Upload File -->
+                <div class="upload-card" id="uploadSection">
+                    <h4 class="mb-4"><i class="fas fa-cloud-upload-alt"></i> Upload Your Study Material</h4>
+                    
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">
+                            <i class="fas fa-file-upload"></i>
+                        </div>
+                        <h5>Drag & Drop your file here</h5>
+                        <p class="text-muted">or click to browse files</p>
+                        <p class="text-muted small">Supported formats: PDF, TXT, PPTX, DOCX, Images (PNG, JPG, etc.)</p>
+                        <input type="file" id="fileInput" class="file-input" accept=".pdf,.txt,.pptx,.docx,.doc,.png,.jpg,.jpeg,.tiff,.bmp,.gif">
+                    </div>
+
+                    <div class="preview-section" id="previewSection">
+                        <h5 class="mb-3">Extracted Content Preview:</h5>
+                        <div class="context-preview" id="contextPreview"></div>
+                        <button class="btn btn-primary mt-3" id="continueBtn">
+                            <i class="fas fa-arrow-right"></i> Continue to Generate Quiz
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Generate Quiz -->
+                <div class="upload-card generate-section" id="generateSection">
+                    <h4 class="mb-4"><i class="fas fa-magic"></i> Generate Quiz</h4>
+                    
+                    <form id="generateForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="num_questions" class="form-label">Number of Questions</label>
+                                <input type="number" id="num_questions" class="form-control" value="10" min="5" max="30">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="difficulty" class="form-label">Difficulty Level</label>
+                                <select id="difficulty" class="form-select">
+                                    <option value="easy">Easy</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="hard">Hard</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-text">
+                                <i class="fas fa-info-circle"></i> 
+                                Questions will include a mix of Multiple Choice, True/False, Fill in the Blanks, and Statement types
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success btn-lg w-100" {% if not gemini_available %}disabled title="Please configure Gemini API key first"{% endif %}>
+                            <i class="fas fa-robot"></i> 
+                            {% if gemini_available %}
+                                Generate Quiz with AI
+                            {% else %}
+                                AI Not Available
+                            {% endif %}
+                        </button>
+
+                        {% if not gemini_available %}
+                        <div class="alert alert-warning mt-3" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Gemini API key required for quiz generation. 
+                            <a href="{{ url_for('settings.settings') }}" class="alert-link">Configure settings</a>
+                        </div>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let extractedContext = "";
+
+        // File upload handling
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const previewSection = document.getElementById('previewSection');
+        const contextPreview = document.getElementById('contextPreview');
+        const continueBtn = document.getElementById('continueBtn');
+        const generateSection = document.getElementById('generateSection');
+
+        // Click to upload
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileUpload(files[0]);
+            }
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileUpload(e.target.files[0]);
+            }
+        });
+
+        async function handleFileUpload(file) {
+            const formData = new FormData();
+            formData.append("file", file);
+
+            // Show loading state
+            uploadArea.innerHTML = `
+                <div class="upload-icon">
+                    <i class="fas fa-spinner fa-spin"></i>
+                </div>
+                <h5>Processing file...</h5>
+                <p class="text-muted">Extracting content from ${file.name}</p>
+            `;
+
+            try {
+                const res = await fetch("{{ url_for('quiz.upload_file') }}", { 
+                    method: "POST", 
+                    body: formData 
+                });
+                const data = await res.json();
+
+                if (data.error) {
+                    alert("Error: " + data.error);
+                    resetUploadArea();
+                } else if (data.context) {
+                    extractedContext = data.context;
+                    showPreview(data.context, file.name);
+                    updateStep(2);
+                }
+            } catch (error) {
+                alert("Error: " + error.message);
+                resetUploadArea();
+            }
+        }
+
+        function showPreview(context, filename) {
+            contextPreview.textContent = context.substring(0, 500) + (context.length > 500 ? '...' : '');
+            previewSection.style.display = 'block';
+            
+            uploadArea.innerHTML = `
+                <div class="upload-icon text-success">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h5>File Uploaded Successfully!</h5>
+                <p class="text-muted">${filename}</p>
+                <p class="text-success small"><i class="fas fa-check"></i> Content extracted successfully</p>
+            `;
+        }
+
+        function resetUploadArea() {
+            uploadArea.innerHTML = `
+                <div class="upload-icon">
+                    <i class="fas fa-file-upload"></i>
+                </div>
+                <h5>Drag & Drop your file here</h5>
+                <p class="text-muted">or click to browse files</p>
+                <p class="text-muted small">Supported formats: PDF, TXT, PPTX, DOCX, Images</p>
+            `;
+            previewSection.style.display = 'none';
+        }
+
+        // Continue to generate quiz
+        continueBtn.addEventListener('click', () => {
+            generateSection.style.display = 'block';
+            updateStep(3);
+        });
+
+        // Generate quiz form
+        document.getElementById('generateForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            // Show loading state
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating Quiz...';
+            submitBtn.disabled = true;
+
+            const payload = {
+                num_questions: document.getElementById("num_questions").value,
+                difficulty: document.getElementById("difficulty").value,
+                context: extractedContext
+            };
+
+            try {
+                const res = await fetch("{{ url_for('quiz.generate_questions') }}", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                if (data.questions) {
+                    // Redirect to take quiz
+                    window.location.href = "{{ url_for('quiz.take_quiz') }}";
+                } else {
+                    alert("Error: " + (data.error || "Failed to generate questions from this content"));
+                }
+            } catch (error) {
+                alert("Error: " + error.message);
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+
+        function updateStep(stepNumber) {
+            // Reset all steps
+            document.querySelectorAll('.step').forEach(step => {
+                step.classList.remove('active');
+            });
+            
+            // Activate current step
+            document.getElementById(`step${stepNumber}`).classList.add('active');
+        }
+
+        // Initialize
+        updateStep(1);
+    </script>
+</body>
+</html>
