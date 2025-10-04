@@ -277,6 +277,7 @@
     <div class="quiz-header">
       <h1><i class="fas fa-tasks"></i> QuizGen Interactive Quiz</h1>
       <p>Test your knowledge with this interactive quiz</p>
+      <p><strong>Quiz:</strong> {{ quiz_title }}</p>
     </div>
 
     <div class="progress-container">
@@ -319,7 +320,7 @@
 
     <div class="quiz-card d-none" id="results-card">
       <div class="quiz-card-header">
-        Quiz Results
+        Quiz Results - {{ quiz_title }}
       </div>
       <div class="quiz-card-body">
         <div class="results-container">
@@ -336,6 +337,26 @@
             <a href="{{ url_for('quiz.dashboard') }}" class="quiz-btn quiz-btn-outline">
               <i class="fas fa-home"></i> Dashboard
             </a>
+          </div>
+          
+          <!-- PDF Download Section -->
+          <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-download"></i> Download Quiz
+                    </div>
+                    <div class="card-body">
+                        <form id="downloadForm" action="{{ url_for('quiz.download_pdf') }}" method="POST">
+                            <input type="hidden" name="topic" id="downloadTopic" value="{{ quiz_title }}">
+                            <input type="hidden" name="questions" id="downloadQuestions">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-file-pdf"></i> Download as PDF
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
           </div>
           
           <div class="review-container d-none" id="review-container">
@@ -362,7 +383,7 @@
   <script>
     // Quiz data structure
     let quizData = {
-      title: "Generated Quiz",
+      title: "{{ quiz_title }}",
       questions: [],
       userAnswers: [],
       startTime: null,
@@ -387,6 +408,9 @@
     const reviewBtn = document.getElementById('review-btn');
     const reviewContainer = document.getElementById('review-container');
     const timer = document.getElementById('timer');
+    const downloadForm = document.getElementById('downloadForm');
+    const downloadQuestions = document.getElementById('downloadQuestions');
+    const downloadTopic = document.getElementById('downloadTopic');
 
     // Current question index
     let currentQuestionIndex = 0;
@@ -457,13 +481,18 @@
       question.options.forEach((option, optionIndex) => {
         const optionItem = document.createElement('div');
         optionItem.className = 'option-item';
-        if (quizData.userAnswers[index] === option) {
+        
+        // Get the stored answer as letter and compare
+        const storedAnswer = quizData.userAnswers[index];
+        const currentOptionLetter = ['A', 'B', 'C', 'D'][optionIndex];
+        
+        if (storedAnswer === currentOptionLetter) {
           optionItem.classList.add('selected');
         }
         
         optionItem.innerHTML = `
-          <input type="radio" class="option-input" name="answer" id="option-${optionIndex}" value="${option}" 
-            ${quizData.userAnswers[index] === option ? 'checked' : ''}>
+          <input type="radio" class="option-input" name="answer" id="option-${optionIndex}" 
+            value="${currentOptionLetter}" ${storedAnswer === currentOptionLetter ? 'checked' : ''}>
           <label class="option-label" for="option-${optionIndex}">${option}</label>
         `;
         
@@ -473,7 +502,7 @@
           });
           optionItem.classList.add('selected');
           document.getElementById(`option-${optionIndex}`).checked = true;
-          quizData.userAnswers[index] = option;
+          quizData.userAnswers[index] = currentOptionLetter; // Store as letter
           updateNavigationButtons();
         });
         
@@ -523,16 +552,35 @@
     }
 
     // Submit the quiz
-    function submitQuiz() {
-      stopTimer();
+    // Submit the quiz
+function submitQuiz() {
+  stopTimer();
+  
+  // Calculate score with proper TrueFalse handling
+  let score = 0;
+  quizData.questions.forEach((question, index) => {
+    const userAnswer = quizData.userAnswers[index];
+    const correctAnswer = question.answer;
+    
+    let normalizedUserAnswer = userAnswer || '';
+    let normalizedCorrectAnswer = correctAnswer || '';
+    
+    // Handle TrueFalse question comparison
+    if (question.type === 'TrueFalse') {
+      if (userAnswer === 'A') normalizedUserAnswer = 'True';
+      else if (userAnswer === 'B') normalizedUserAnswer = 'False';
       
-      // Calculate score
-      let score = 0;
-      quizData.questions.forEach((question, index) => {
-        if (quizData.userAnswers[index] === question.answer) {
-          score++;
-        }
-      });
+      if (correctAnswer === 'A') normalizedCorrectAnswer = 'True';
+      else if (correctAnswer === 'B') normalizedCorrectAnswer = 'False';
+    } else {
+      normalizedUserAnswer = String(userAnswer || '').trim().toUpperCase();
+      normalizedCorrectAnswer = String(correctAnswer || '').trim().toUpperCase();
+    }
+    
+    if (normalizedUserAnswer === normalizedCorrectAnswer) {
+      score++;
+    }
+  });
       
       // Display results
       scoreDisplay.textContent = `${score}/${quizData.questions.length}`;
@@ -545,6 +593,10 @@
       } else {
         scoreText.textContent = 'Keep studying! Review the material and try again.';
       }
+
+      // Set PDF download data
+      downloadQuestions.value = JSON.stringify(quizData.questions);
+      downloadTopic.value = quizData.title;
       
       // Hide quiz card, show results card
       quizCard.classList.add('d-none');
@@ -564,7 +616,8 @@
         body: JSON.stringify({
           score: score,
           total: total,
-          answers: quizData.userAnswers
+          answers: quizData.userAnswers,
+          time_spent: quizData.timeSpent 
         })
       })
       .then(response => response.json())
@@ -578,51 +631,93 @@
       });
     }
 
-    // Show review of answers
-    function showReview() {
-      reviewContainer.innerHTML = '';
-      reviewContainer.classList.remove('d-none');
+    
+       
+       // Fix answer comparison in showReview function
+function showReview() {
+  reviewContainer.innerHTML = '';
+  reviewContainer.classList.remove('d-none');
+  
+  quizData.questions.forEach((question, index) => {
+    const reviewItem = document.createElement('div');
+    
+    // Get user's answer and correct answer
+    const userAnswer = quizData.userAnswers[index];
+    const correctAnswer = question.answer;
+    
+    // Special handling for TrueFalse questions
+    let normalizedUserAnswer = userAnswer || '';
+    let normalizedCorrectAnswer = correctAnswer || '';
+    
+    if (question.type === 'TrueFalse') {
+      // Convert letters to text for TrueFalse questions
+      if (userAnswer === 'A') normalizedUserAnswer = 'True';
+      else if (userAnswer === 'B') normalizedUserAnswer = 'False';
       
-      quizData.questions.forEach((question, index) => {
-        const reviewItem = document.createElement('div');
-        const isCorrect = quizData.userAnswers[index] === question.answer;
-        
-        reviewItem.className = `review-item ${isCorrect ? 'correct' : 'incorrect'}`;
-        
-        let explanationHtml = '';
-        if (question.explanation) {
-          explanationHtml = `
-            <div class="review-explanation">
-              <strong><i class="fas fa-lightbulb"></i> Explanation:</strong> ${question.explanation}
-            </div>
-          `;
-        }
-        
-        reviewItem.innerHTML = `
-          <div class="review-question">
-            ${index + 1}. ${question.question}
-            ${question.type ? `<span class="question-type-badge">${question.type}</span>` : ''}
-          </div>
-          <div class="mt-2">
-            <strong>Your answer:</strong> 
-            <span class="review-answer ${isCorrect ? 'review-correct' : 'review-incorrect'}">
-              ${quizData.userAnswers[index] || 'Not answered'}
-            </span>
-          </div>
-          <div class="mt-1">
-            <strong>Correct answer:</strong> 
-            <span class="review-answer review-correct">${question.answer}</span>
-          </div>
-          ${explanationHtml}
-        `;
-        
-        reviewContainer.appendChild(reviewItem);
-      });
-      
-      // Scroll to review section
-      reviewContainer.scrollIntoView({ behavior: 'smooth' });
+      if (correctAnswer === 'A') normalizedCorrectAnswer = 'True';
+      else if (correctAnswer === 'B') normalizedCorrectAnswer = 'False';
+    } else {
+      // For other question types, use letter format
+      normalizedUserAnswer = String(userAnswer || '').trim().toUpperCase();
+      normalizedCorrectAnswer = String(correctAnswer || '').trim().toUpperCase();
     }
-
+    
+    const isCorrect = normalizedUserAnswer === normalizedCorrectAnswer;
+    
+    reviewItem.className = `review-item ${isCorrect ? 'correct' : 'incorrect'}`;
+    
+    let explanationHtml = '';
+    if (question.explanation) {
+      explanationHtml = `
+        <div class="review-explanation">
+          <strong><i class="fas fa-lightbulb"></i> Explanation:</strong> ${question.explanation}
+        </div>
+      `;
+    }
+    
+    // Format user answer display
+    let userAnswerDisplay = normalizedUserAnswer || 'Not answered';
+    if (question.type !== 'TrueFalse' && userAnswer && question.options && question.options.length > 0) {
+      // For non-TrueFalse questions, try to find the full option text
+      const optionIndex = ['A', 'B', 'C', 'D'].indexOf(userAnswer.toUpperCase());
+      if (optionIndex !== -1 && optionIndex < question.options.length) {
+        userAnswerDisplay = question.options[optionIndex];
+      }
+    }
+    
+    // Format correct answer display  
+    let correctAnswerDisplay = normalizedCorrectAnswer;
+    if (question.type !== 'TrueFalse' && correctAnswer && question.options && question.options.length > 0) {
+      const optionIndex = ['A', 'B', 'C', 'D'].indexOf(correctAnswer.toUpperCase());
+      if (optionIndex !== -1 && optionIndex < question.options.length) {
+        correctAnswerDisplay = question.options[optionIndex];
+      }
+    }
+    
+    reviewItem.innerHTML = `
+      <div class="review-question">
+        ${index + 1}. ${question.question}
+        ${question.type ? `<span class="question-type-badge">${question.type}</span>` : ''}
+      </div>
+      <div class="mt-2">
+        <strong>Your answer:</strong> 
+        <span class="review-answer ${isCorrect ? 'review-correct' : 'review-incorrect'}">
+          ${userAnswerDisplay}
+        </span>
+      </div>
+      <div class="mt-1">
+        <strong>Correct answer:</strong> 
+        <span class="review-answer review-correct">${correctAnswerDisplay}</span>
+      </div>
+      ${explanationHtml}
+    `;
+    
+    reviewContainer.appendChild(reviewItem);
+  });
+  
+  // Scroll to review section
+  reviewContainer.scrollIntoView({ behavior: 'smooth' });
+}
     // Restart the quiz
     function restartQuiz() {
       // Reset quiz data

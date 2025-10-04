@@ -77,6 +77,35 @@ def register():
                 return redirect(url_for("quiz.dashboard"))
             conn.close()
     return render_template("register.html", error=error)
+@auth_bp.route("/admin/login", methods=["GET", "POST"])
+def admin_login():
+    """Admin-specific login route"""
+    if request.method == "GET":
+        return render_template("admin_login.html")
+    
+    username = request.form.get("username")
+    password = request.form.get("password")
+    
+    conn = get_db_connection()
+    
+    # Only allow users with 'admin' role to login
+    user = conn.execute(
+        'SELECT * FROM users WHERE (username = ? OR email = ?) AND role = "admin"', 
+        (username, username)
+    ).fetchone()
+    
+    if user and check_password_hash(user['password_hash'], password):
+        session['user_id'] = user['id']
+        session['user'] = user['username']
+        session['user_role'] = user['role']  # Store admin role in session
+        
+        flash("Admin login successful!", "success")
+        conn.close()
+        return redirect(url_for('admin.admin_dashboard'))
+    
+    flash("Invalid admin credentials or insufficient privileges", "error")
+    conn.close()
+    return render_template("admin_login.html")
 
 @auth_bp.route("/logout")
 def logout():

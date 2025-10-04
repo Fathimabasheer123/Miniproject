@@ -2,22 +2,30 @@ import google.generativeai as genai
 import os
 import json
 import re
+from dotenv import load_dotenv  # Add this import
+
+# Load environment variables from .env file
+load_dotenv()
 
 class GeminiAPI:
     def __init__(self, api_key=None):
+        # Corrected: Use environment variable name, not the actual key
         self.api_key = api_key or os.getenv('GEMINI_API_KEY')
-        if self.api_key:
-            try:
-                genai.configure(api_key=self.api_key)
-                # Use gemini-1.5-flash (free, fast, and better for this use case)
-                self.model = genai.GenerativeModel('gemini-1.5-flash-latest')
-                print("✅ Gemini Flash API initialized successfully")
-            except Exception as e:
-                print(f"❌ Failed to initialize Gemini API: {str(e)}")
-                self.model = None
-        else:
+        
+        if not self.api_key:
+            print("⚠️ GEMINI_API_KEY environment variable not found")
+            print("   Please create a .env file with GEMINI_API_KEY=your_actual_key")
             self.model = None
-            print("⚠️ GEMINI_API_KEY not found")
+            return
+            
+        try:
+            genai.configure(api_key=self.api_key)
+            # Use gemini-1.5-flash (free, fast, and better for this use case)
+            self.model = genai.GenerativeModel('gemini-2.5-flash')
+            print("✅ Gemini Flash API initialized successfully")
+        except Exception as e:
+            print(f"❌ Failed to initialize Gemini API: {str(e)}")
+            self.model = None
     
     def is_available(self):
         return self.model is not None
@@ -58,32 +66,18 @@ class GeminiAPI:
         prompt = f"""
         CONTEXT: {context[:6000]}
         
-        TASK: Generate exactly {num_questions} quiz questions based ONLY on the context above.
+        TASK: Generate EXACTLY {num_questions} quiz questions based ONLY on the context above.
         DIFFICULTY LEVEL: {difficulty.upper()}
         {difficulty_instructions.get(difficulty, difficulty_instructions['medium'])}
         
-        QUESTION TYPE REQUIREMENTS:
-        1. MULTIPLE CHOICE (MCQ): 40% of questions
-           - 4 options (A, B, C, D)
-           - One clearly correct answer
-           - 3 plausible but incorrect distractors
+        QUESTION TYPE VARIETY:
+        Include a mix of these question types:
+        - MULTIPLE CHOICE (MCQ): Standard multiple choice with 4 options
+        - TRUE/FALSE: Clear true/false statements  
+        - FILL IN THE BLANKS: Sentences with blanks and 4 word options
+        - STATEMENT TYPE: Two statements with relationship analysis
         
-        2. TRUE/FALSE: 20% of questions  
-           - Only "True" and "False" as options
-           - Statements should be clearly verifiable from context
-        
-        3. FILL IN THE BLANKS: 20% of questions
-           - Provide a sentence with a blank: "The _____ is important."
-           - Give 4 OPTIONS (A, B, C, D) for the blank
-           - One option is the correct word/phrase from context
-        
-        4. STATEMENT TYPE: 20% of questions
-           - Present TWO statements (Statement I and Statement II)
-           - Provide 4 options about their relationship:
-             A) Both Statement I and Statement II are true
-             B) Statement I is true but Statement II is false
-             C) Statement I is false but Statement II is true
-             D) Both Statement I and Statement II are false
+        IMPORTANT: Generate EXACTLY {num_questions} questions total.
         
         FOR EACH QUESTION, PROVIDE:
         - question: Clear question text (for Statement type, include both statements)
@@ -107,7 +101,7 @@ class GeminiAPI:
                 {{
                     "question": "The context states that AI will replace all jobs.",
                     "type": "TrueFalse", 
-                    "options": ["True", "False", "Not specified", "Partially true"],
+                    "options": ["True", "False"],
                     "answer": "False",
                     "explanation": "The context mentions AI will transform jobs, not replace all of them.",
                     "difficulty": "{difficulty}"
@@ -136,23 +130,24 @@ class GeminiAPI:
             ]
         }}
         
-        IMPORTANT: 
-        - ALL questions must be answerable from the context ONLY
-        - For ALL question types, always provide exactly 4 options
-        - Return ONLY valid JSON, no additional text
-        - Ensure Statement type questions have two clear, verifiable statements
+        CRITICAL REQUIREMENTS:
+        1. Generate EXACTLY {num_questions} questions - no more, no less
+        2. ALL questions must be answerable from the context ONLY
+        3. For ALL question types, always provide exactly 4 options
+        4. Return ONLY valid JSON, no additional text
+        5. Ensure questions are diverse and cover different aspects of the context
         """
         
         try:
-            print(f"🧠 Generating {num_questions} {difficulty} questions using Gemini Flash...")
+            print(f"🧠 Generating EXACTLY {num_questions} {difficulty} questions using Gemini Flash...")
             
             response = self.model.generate_content(
                 prompt,
                 generation_config=genai.types.GenerationConfig(
-                    temperature=0.7,  # Balanced creativity vs accuracy
+                    temperature=0.7,
                     top_p=0.8,
                     top_k=40,
-                    max_output_tokens=2048,
+                    max_output_tokens=8192,  # Increased for more questions
                 )
             )
             
@@ -166,14 +161,23 @@ class GeminiAPI:
             data = json.loads(text)
             questions = data.get("questions", [])
             
-            # Validate and clean questions
+            print(f"📊 Gemini returned {len(questions)} questions")
+            
+            # Validate and clean questions - be less strict
             validated_questions = []
-            for q in questions:
+            for i, q in enumerate(questions):
                 cleaned_q = self._clean_question(q)
                 if cleaned_q:
                     validated_questions.append(cleaned_q)
+                else:
+                    print(f"⚠️ Question {i+1} filtered out during cleaning")
             
-            print(f"✅ Generated {len(validated_questions)} validated questions")
+            print(f"✅ After validation: {len(validated_questions)} questions")
+            
+            # If we got fewer questions than requested, log warning but return what we have
+            if len(validated_questions) < num_questions:
+                print(f"⚠️ WARNING: Requested {num_questions} but got {len(validated_questions)} valid questions")
+            
             return validated_questions
             
         except json.JSONDecodeError as e:
@@ -185,33 +189,56 @@ class GeminiAPI:
             return None
     
     def _clean_question(self, question):
-        """Clean and validate individual question"""
+        """Clean and validate individual question - more lenient"""
         try:
             # Required fields
             if not all(key in question for key in ['question', 'type', 'options', 'answer']):
+                print(f"⚠️ Missing required fields in question")
                 return None
             
-            # Ensure options is a list with exactly 4 items
-            if not isinstance(question['options'], list) or len(question['options']) != 4:
+            # Ensure question text is not empty
+            if not question['question'] or not question['question'].strip():
+                print(f"⚠️ Empty question text")
                 return None
             
-            # Clean answer format based on question type
+            # Ensure options is a list with at least 2 items
+            if not isinstance(question['options'], list) or len(question['options']) < 2:
+                print(f"⚠️ Invalid options format")
+                return None
+            
+            # If we have fewer than 4 options, pad with generic ones
+            if len(question['options']) < 4:
+                print(f"⚠️ Only {len(question['options'])} options, padding to 4")
+                while len(question['options']) < 4:
+                    question['options'].append(f"Option {len(question['options']) + 1}")
+            
+            # Clean answer format
+            original_answer = question['answer']
             if question['type'] in ['MCQ', 'FillInBlank', 'Statement']:
                 if isinstance(question['answer'], int) and 0 <= question['answer'] < 4:
                     question['answer'] = ['A', 'B', 'C', 'D'][question['answer']]
-                elif isinstance(question['answer'], str) and question['answer'].upper() in ['A', 'B', 'C', 'D']:
-                    question['answer'] = question['answer'].upper()
-                else:
-                    return None
+                elif isinstance(question['answer'], str):
+                    # Extract first letter and convert to uppercase
+                    match = re.search(r'[A-D]', question['answer'].upper())
+                    if match:
+                        question['answer'] = match.group()
+                    else:
+                        # Default to A if cannot parse
+                        question['answer'] = 'A'
+                        print(f"⚠️ Could not parse answer '{original_answer}', defaulting to A")
             
             elif question['type'] == 'TrueFalse':
                 if isinstance(question['answer'], bool):
                     question['answer'] = 'True' if question['answer'] else 'False'
                 elif isinstance(question['answer'], str):
-                    question['answer'] = 'True' if question['answer'].lower() in ['true', 't', 'yes', 'y'] else 'False'
-                # For TrueFalse with 4 options, ensure answer is True or False
-                if question['answer'] not in ['True', 'False']:
-                    return None
+                    if question['answer'].lower() in ['true', 't', 'yes', 'y', 'a']:
+                        question['answer'] = 'True'
+                    elif question['answer'].lower() in ['false', 'f', 'no', 'n', 'b']:
+                        question['answer'] = 'False'
+                    else:
+                        # Default to False if cannot parse
+                        question['answer'] = 'False'
+                        print(f"⚠️ Could not parse TrueFalse answer '{original_answer}', defaulting to False")
             
             # Ensure explanation exists
             if 'explanation' not in question or not question['explanation']:
@@ -220,11 +247,6 @@ class GeminiAPI:
             # Ensure difficulty is set
             if 'difficulty' not in question:
                 question['difficulty'] = 'medium'
-            
-            # Special validation for Statement type
-            if question['type'] == 'Statement':
-                if not self._validate_statement_question(question):
-                    return None
             
             return question
             

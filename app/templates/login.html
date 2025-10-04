@@ -333,6 +333,20 @@
             <div class="register-link">
                 <p>Don't have an account? <a href="{{ url_for('auth.register') }}">Register here</a></p>
             </div>
+            <div class="admin-login-section" style="text-align: center; margin-top: 25px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+    <p style="color: #6b7280; font-size: 14px; margin-bottom: 15px;">
+        <i class="fas fa-shield-alt"></i> Administrator Access
+    </p>
+    <a href="{{ url_for('auth.admin_login') }}" class="admin-login-btn" 
+       style="display: inline-flex; align-items: center; gap: 8px; 
+              background: linear-gradient(90deg, #2c3e50, #34495e); 
+              color: white; padding: 10px 20px; border-radius: 8px; 
+              text-decoration: none; font-weight: 500; font-size: 14px;
+              transition: all 0.3s;">
+        <i class="fas fa-user-shield"></i>
+        Admin Login
+    </a>
+</div>
         </div>
     </div>
 

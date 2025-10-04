@@ -2,9 +2,12 @@ import sqlite3
 import os
 from functools import wraps
 from flask import session, redirect, url_for
+from werkzeug.security import generate_password_hash
 
 def get_db_connection():
     """Get database connection"""
+    # Create instance directory if it doesn't exist
+    os.makedirs('instance', exist_ok=True)
     conn = sqlite3.connect('instance/database.db')
     conn.row_factory = sqlite3.Row
     return conn
@@ -13,12 +16,13 @@ def init_db():
     """Initialize database with all tables"""
     conn = get_db_connection()
     
-    # Users table
+    # Users table WITH role column
     conn.execute('''CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
         email TEXT UNIQUE NOT NULL,
         password_hash TEXT NOT NULL,
+        role TEXT DEFAULT 'user',
         preferences TEXT DEFAULT '{"theme": "light"}',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
@@ -78,35 +82,85 @@ def init_db():
     
     conn.commit()
     conn.close()
+    
+    # Run migrations first to ensure all columns exist
+    migrate_database()
+    
+    # Then create default admin
+    create_default_admin()
+
+def create_default_admin():
+    """Create a default admin user if none exists"""
+    conn = get_db_connection()
+    
+    try:
+        # Check if admin user already exists
+        admin_exists = conn.execute(
+            'SELECT COUNT(*) FROM users WHERE username = ? AND role = ?', 
+            ('admin', 'admin')
+        ).fetchone()[0]
+        
+        if not admin_exists:
+            # Check if there's any user with admin username but wrong role
+            existing_admin = conn.execute(
+                'SELECT * FROM users WHERE username = ?', ('admin',)
+            ).fetchone()
+            
+            if existing_admin:
+                # Update existing admin user to have correct role
+                conn.execute(
+                    'UPDATE users SET role = ? WHERE username = ?',
+                    ('admin', 'admin')
+                )
+                print("✅ Updated existing admin user with admin role")
+            else:
+                # Create new admin user with default password "admin123"
+                password_hash = generate_password_hash('admin123')
+                conn.execute(
+                    'INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, ?)',
+                    ('admin', 'admin@quizgen.com', password_hash, 'admin')
+                )
+                print("✅ Created default admin user: admin / admin123")
+        
+        conn.commit()
+        
+    except sqlite3.OperationalError as e:
+        print(f"⚠️ Database error in create_default_admin: {e}")
+        # If there's an error, it means we need to run migrations first
+        print("⚠️ Running emergency migration...")
+        migrate_database()
+        # Try again after migration
+        create_default_admin()
+    
+    finally:
+        conn.close()
 
 def migrate_database():
     """Add new columns to existing tables without losing data"""
     conn = get_db_connection()
     
-    try:
-        conn.execute('ALTER TABLE quizzes ADD COLUMN topic TEXT DEFAULT "General"')
-    except sqlite3.OperationalError:
-        pass
+    # List of migrations to run
+    migrations = [
+        ('users', 'role', 'TEXT DEFAULT "user"'),
+        ('quizzes', 'topic', 'TEXT DEFAULT "General"'),
+        ('questions', 'explanation', 'TEXT'),
+        ('questions', 'difficulty', 'TEXT DEFAULT "medium"'),
+        ('quiz_attempts', 'time_spent', 'INTEGER DEFAULT 0'),
+        ('quiz_attempts', 'question_types', 'TEXT DEFAULT "[]"')
+    ]
     
-    try:
-        conn.execute('ALTER TABLE questions ADD COLUMN explanation TEXT')
-    except sqlite3.OperationalError:
-        pass
-    
-    try:
-        conn.execute('ALTER TABLE questions ADD COLUMN difficulty TEXT DEFAULT "medium"')
-    except sqlite3.OperationalError:
-        pass
-    
-    try:
-        conn.execute('ALTER TABLE quiz_attempts ADD COLUMN time_spent INTEGER DEFAULT 0')
-    except sqlite3.OperationalError:
-        pass
-    
-    try:
-        conn.execute('ALTER TABLE quiz_attempts ADD COLUMN question_types TEXT DEFAULT "[]"')
-    except sqlite3.OperationalError:
-        pass
+    for table, column, column_type in migrations:
+        try:
+            # Check if column exists by trying to select it
+            conn.execute(f'SELECT {column} FROM {table} LIMIT 1')
+            print(f"✅ Column '{column}' already exists in '{table}' table")
+        except sqlite3.OperationalError:
+            # Column doesn't exist, so add it
+            try:
+                conn.execute(f'ALTER TABLE {table} ADD COLUMN {column} {column_type}')
+                print(f"✅ Added column '{column}' to '{table}' table")
+            except sqlite3.OperationalError as e:
+                print(f"⚠️ Failed to add column '{column}' to '{table}': {e}")
     
     conn.commit()
     conn.close()
@@ -121,5 +175,8 @@ def login_required(f):
     return decorated
 
 # Initialize database
-init_db()
-migrate_database()
+try:
+    init_db()
+    print("✅ Database initialized successfully!")
+except Exception as e:
+    print(f"❌ Database initialization failed: {e}")

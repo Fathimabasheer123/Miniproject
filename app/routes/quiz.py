@@ -10,6 +10,15 @@ from docx import Document
 from fpdf import FPDF
 from datetime import datetime
 from werkzeug.utils import secure_filename
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.units import inch
+from reportlab.lib import colors
 
 # OCR imports with path configuration
 try:
@@ -116,6 +125,37 @@ def enhanced_pdf_extraction(pdf_file):
     
     return best_text, best_method
 
+def extract_quiz_title(context, custom_title=None):
+    """Extract a meaningful quiz title from the context or use custom title"""
+    # PRIORITY 1: Use custom title if provided
+    if custom_title and custom_title.strip():
+        title = custom_title.strip()
+        if len(title) > 60:
+            title = title[:57] + "..."
+        return title
+    
+    # PRIORITY 2: Try to extract from context
+    if not context:
+        return "Generated Quiz"
+    
+    # Try to extract first meaningful sentence
+    sentences = re.split(r'[.!?]', context.strip())
+    for sentence in sentences:
+        sentence = sentence.strip()
+        if len(sentence) > 20 and len(sentence.split()) >= 3:
+            # Clean up the sentence for title
+            title = sentence[:60].strip()  # Limit length
+            if not title.endswith(('.', '!', '?')):
+                title += '...'
+            return title
+    
+    # Fallback: use first 4 words
+    words = context.strip().split()[:4]
+    if words:
+        return ' '.join(words) + '...'
+    
+    return "Study Material Quiz"
+
 @quiz_bp.route("/dashboard")
 @login_required
 def dashboard():
@@ -123,23 +163,39 @@ def dashboard():
     conn = get_db_connection()
     uid = session['user_id']
     
-    # Get basic stats
+    # Get basic stats - USE SAME LOGIC AS HISTORY PAGE
     quizzes_completed = conn.execute(
-        'SELECT COUNT(*) FROM quiz_attempts WHERE user_id=?', (uid,)
+        'SELECT COUNT(DISTINCT quiz_id) FROM quiz_attempts WHERE user_id=?', (uid,)
     ).fetchone()[0]
-    
-    avg_score = conn.execute(
-        'SELECT AVG(score * 100.0 / total_questions) FROM quiz_attempts WHERE user_id=?', (uid,)
-    ).fetchone()[0]
-    average_score = round(avg_score, 1) if avg_score else 0
-    
+
+# FIX: Use only latest attempts per quiz (same as history page)
+    avg_score_result = conn.execute('''
+        SELECT AVG(score * 100.0 / total_questions) 
+        FROM quiz_attempts 
+        WHERE id IN (
+            SELECT MAX(id) 
+            FROM quiz_attempts 
+            WHERE user_id = ? 
+            GROUP BY quiz_id
+        )
+    ''', (uid,)).fetchone()[0]
+    average_score = round(avg_score_result, 1) if avg_score_result else 0
+
     quizzes_created = conn.execute(
         'SELECT COUNT(*) FROM quizzes WHERE user_id=?', (uid,)
     ).fetchone()[0]
-    
-    total_time = conn.execute(
-        'SELECT COALESCE(SUM(time_spent), 0) FROM quiz_attempts WHERE user_id=?', (uid,)
-    ).fetchone()[0]
+
+# FIX: Also update total_time to use same logic
+    total_time = conn.execute('''
+        SELECT COALESCE(SUM(time_spent), 0) 
+        FROM quiz_attempts 
+        WHERE id IN (
+            SELECT MAX(id) 
+            FROM quiz_attempts 
+            WHERE user_id = ? 
+            GROUP BY quiz_id
+        )
+    ''', (uid,)).fetchone()[0]
     
     streak_result = conn.execute('''
         SELECT COUNT(DISTINCT DATE(completed_at)) as streak
@@ -149,25 +205,59 @@ def dashboard():
     ''', (uid,)).fetchone()
     days_streak = streak_result['streak'] if streak_result else 0
     
+    # Get recent quizzes with proper formatting - Only show latest attempt per quiz
     recent = conn.execute('''
-        SELECT q.title, qa.score, qa.total_questions, qa.completed_at, qa.difficulty
+        SELECT q.title, q.context, qa.score, qa.total_questions, qa.completed_at, q.difficulty
         FROM quiz_attempts qa
         JOIN quizzes q ON qa.quiz_id = q.id
         WHERE qa.user_id = ?
+        AND qa.id IN (
+            SELECT MAX(id) FROM quiz_attempts 
+            WHERE user_id = ? 
+            GROUP BY quiz_id
+        )
         ORDER BY qa.completed_at DESC
         LIMIT 5
-    ''', (uid,)).fetchall()
+    ''', (uid, uid)).fetchall()
     conn.close()
 
+    # Format recent quizzes with proper titles
+    recent_quizzes = []
+    for r in recent:
+        # Use the actual title from database (now includes custom titles)
+        title = r['title'] if r['title'] else 'Study Quiz'
+        
+        # Format date properly
+        completed_date = r['completed_at']
+        if completed_date:
+            if 'T' in completed_date:
+                dt = datetime.fromisoformat(completed_date.replace('Z', '+00:00'))
+            else:
+                dt = datetime.strptime(completed_date, '%Y-%m-%d %H:%M:%S')
+            formatted_date = dt.strftime('%b %d, %Y')
+        else:
+            formatted_date = 'Unknown date'
+        
+        recent_quizzes.append({
+            'title': title,
+            'score': round((r['score'] / r['total_questions']) * 100) if r['total_questions'] > 0 else 0,
+            'date': formatted_date,
+            'difficulty': r['difficulty'] if r['difficulty'] else 'medium'
+        })
+           
+   # Calculate progress based on actual quizzes created
+    quizzes_goal = quizzes_created if quizzes_created > 0 else 1
+    progress_percentage = min(100, round((quizzes_completed / quizzes_goal) * 100))
+
     stats = {
-        'quizzes_completed': quizzes_completed,
-        'average_score': average_score,
-        'quizzes_created': quizzes_created,
-        'total_time_spent': total_time // 60,
-        'progress_percentage': min(100, round((quizzes_completed / 20) * 100)),
-        'quizzes_goal': 20,
-        'days_streak': days_streak
-    }
+    'quizzes_completed': quizzes_completed,
+    'average_score': average_score,
+    'quizzes_created': quizzes_created,
+    'total_time_spent': total_time // 60,
+    'progress_percentage': progress_percentage,
+    'quizzes_goal': quizzes_goal,  # Now shows actual available quizzes
+    'days_streak': days_streak
+}
 
     achievements = {
         'first_quiz': quizzes_completed >= 1,
@@ -175,7 +265,7 @@ def dashboard():
         'perfect_score': any(r['score'] == r['total_questions'] for r in recent),
         'streak_7': days_streak >= 7,
         'gemini_expert': quizzes_created >= 5,
-        'difficulty_master': any(r.get('difficulty') == 'hard' for r in recent),
+        'difficulty_master': any(r['difficulty'] == 'hard' for r in recent if r['difficulty']),
         'earned': 0,
         'total': 6
     }
@@ -189,12 +279,7 @@ def dashboard():
         "dashboard.html",
         user=session['user'],
         stats=stats,
-        recent_quizzes=[{
-            'title': r['title'],
-            'score': round((r['score'] / r['total_questions']) * 100),
-            'date': r['completed_at'][:10],
-            'difficulty': r.get('difficulty', 'medium')
-        } for r in recent]
+        recent_quizzes=recent_quizzes
     )
 
 @quiz_bp.route("/upload", methods=["GET", "POST"])
@@ -215,6 +300,9 @@ def upload_file():
     context = ""
     
     try:
+        # Store original filename for potential title use
+        original_filename = os.path.splitext(filename)[0]  # Remove extension
+        
         if filename.endswith(".pdf"):
             # Use enhanced PDF extraction
             context, method = enhanced_pdf_extraction(f)
@@ -304,8 +392,12 @@ def upload_file():
         
         if len(context) < 100:
             return jsonify({"error": "Not enough text extracted from file. Please try a different file or ensure it contains sufficient readable content."}), 400
-            
-        return jsonify({"context": context})
+        
+        # Return both context and original filename for title generation
+        return jsonify({
+            "context": context,
+            "filename": original_filename
+        })
         
     except Exception as e:
         print(f"❌ Upload Error: {e}")
@@ -320,8 +412,13 @@ def generate_questions():
         num_questions = int(data.get("num_questions", 10))
         difficulty = data.get("difficulty", "medium")
         context = data.get("context", "").strip()
+        custom_title = data.get("title", "").strip()  # Get custom title from frontend
+        
+        # Reduce context size to prevent token limits
+        context = context[:3000]
         
         print(f"🧠 Generating {num_questions} {difficulty} questions from {len(context)} chars of context")
+        print(f"📝 Custom title: {custom_title}")
         
         if not context:
             return jsonify({"error": "Empty context"}), 400
@@ -337,11 +434,15 @@ def generate_questions():
         question_types = list(set([q.get('type', 'MCQ') for q in gemini_questions]))
         print(f"✅ Generated {len(gemini_questions)} questions of types: {question_types}")
 
+        # Extract meaningful title - NOW USING CUSTOM TITLE
+        quiz_title = extract_quiz_title(context, custom_title)
+        print(f"🎯 Final quiz title: {quiz_title}")
+        
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute(
             'INSERT INTO quizzes (user_id, title, context, difficulty, question_types) VALUES (?, ?, ?, ?, ?)',
-            (session['user_id'], 'Generated Quiz', context[:500], difficulty, json.dumps(question_types))
+            (session['user_id'], quiz_title, context[:500], difficulty, json.dumps(question_types))
         )
         quiz_id = cur.lastrowid
         
@@ -357,10 +458,12 @@ def generate_questions():
 
         session['current_quiz'] = gemini_questions
         session['current_quiz_id'] = quiz_id
+        session['quiz_title'] = quiz_title  # Store title in session for display
 
         return jsonify({
             "source": "Gemini AI",
             "questions": gemini_questions,
+            "title": quiz_title,  # Send title back to frontend
             "message": f"Successfully generated {len(gemini_questions)} questions with explanations",
             "redirect": url_for("quiz.take_quiz")
         })
@@ -374,47 +477,118 @@ def generate_questions():
 def take_quiz():
     """Display the generated quiz"""
     quiz = session.get('current_quiz', [])
+    quiz_title = session.get('quiz_title', 'Generated Quiz')
+    
     if not quiz:
         flash("No quiz available. Please generate a quiz first.", "warning")
         return redirect(url_for("quiz.dashboard"))
-    return render_template("quiz.html", questions=quiz)
+    
+    return render_template("quiz.html", questions=quiz, quiz_title=quiz_title)
 
 @quiz_bp.route("/save_attempt", methods=["POST"])
 @login_required
 def save_attempt():
-    """Save quiz attempt results"""
+    """Save quiz attempt results - Update existing attempt for retakes"""
     data = request.get_json()
     quiz_id = session.get('current_quiz_id')
+    user_id = session['user_id']
     
     if not quiz_id:
         return jsonify({"error": "No quiz id found"}), 400
     
+    # Get the original questions to understand question types
+    conn = get_db_connection()
+    questions = conn.execute(
+        'SELECT question_type, answer FROM questions WHERE quiz_id = ?', (quiz_id,)
+    ).fetchall()
+    conn.close()
+    
+    # Normalize answers based on question type
+    normalized_answers = []
+    user_answers = data.get('answers', [])
+    
+    for i, answer in enumerate(user_answers):
+        if i < len(questions):
+            question_type = questions[i]['question_type']
+            correct_answer = questions[i]['answer']
+            
+            if question_type == 'TrueFalse':
+                # For TrueFalse questions, convert letter back to text
+                if answer == 'A':
+                    normalized_answers.append('True')
+                elif answer == 'B':
+                    normalized_answers.append('False')
+                else:
+                    normalized_answers.append(answer or '')
+            else:
+                # For other question types, use letter format
+                normalized = answer.strip().upper()[0] if answer and answer.strip() else ''
+                normalized_answers.append(normalized)
+        else:
+            normalized_answers.append(answer or '')
+    
     conn = get_db_connection()
     
+    # Check if this is a retake
+    is_retake = session.get('is_retake', False)
+    
+    print(f"💾 Saving attempt - Quiz ID: {quiz_id}, User ID: {user_id}, Is Retake: {is_retake}")
+    
+    if is_retake:
+        # For retakes, update the most recent attempt
+        latest_attempt = conn.execute('''
+            SELECT id FROM quiz_attempts 
+            WHERE user_id = ? AND quiz_id = ? 
+            ORDER BY completed_at DESC LIMIT 1
+        ''', (user_id, quiz_id)).fetchone()
+        
+        if latest_attempt:
+            conn.execute('''
+                UPDATE quiz_attempts 
+                SET score = ?, total_questions = ?, answers = ?, time_spent = ?, completed_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            ''', (data['score'], data['total'], json.dumps(normalized_answers), 
+                  data.get('time_spent', 0), latest_attempt['id']))
+            attempt_id = latest_attempt['id']
+            print(f"✅ Updated existing attempt {attempt_id} for retake")
+        else:
+            attempt_id = create_new_attempt(conn, user_id, quiz_id, data, normalized_answers)
+    else:
+        attempt_id = create_new_attempt(conn, user_id, quiz_id, data, normalized_answers)
+    
+    conn.commit()
+    conn.close()
+    
+    # Clear session data
+    session.pop('current_quiz', None)
+    session.pop('current_quiz_id', None)
+    session.pop('is_retake', None)
+    session.pop('quiz_title', None)
+    
+    return jsonify({"success": True, "attempt_id": attempt_id})
+
+def create_new_attempt(conn, user_id, quiz_id, data, normalized_answers):
+    """Helper function to create a new quiz attempt"""
     quiz = conn.execute(
         'SELECT difficulty, question_types FROM quizzes WHERE id = ?', (quiz_id,)
     ).fetchone()
     
-    conn.execute(
+    cursor = conn.execute(
         '''INSERT INTO quiz_attempts (user_id, quiz_id, score, total_questions, answers, time_spent, difficulty, question_types) 
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
-        (session['user_id'], quiz_id, data['score'], data['total'], 
-         json.dumps(data.get('answers', [])), data.get('time_spent', 0),
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+        (user_id, quiz_id, data['score'], data['total'], 
+         json.dumps(normalized_answers), data.get('time_spent', 0),
          quiz['difficulty'] if quiz else 'medium', 
          quiz['question_types'] if quiz else '[]')
     )
-    conn.commit()
-    conn.close()
-    
-    session.pop('current_quiz', None)
-    session.pop('current_quiz_id', None)
-    
-    return jsonify({"success": True})
+    attempt_id = cursor.lastrowid
+    print(f"✅ Created new quiz attempt {attempt_id}")
+    return attempt_id
 
 @quiz_bp.route("/download_pdf", methods=["POST"])
 @login_required
 def download_pdf():
-    """Download quiz as PDF"""
+    """Download quiz as PDF using reportlab for better formatting"""
     try:
         topic = request.form.get("topic", "Generated Quiz")
         questions_data = request.form.get("questions", "[]")
@@ -422,62 +596,147 @@ def download_pdf():
         try:
             questions = json.loads(questions_data)
         except Exception as e:
-            flash("Invalid questions data", "error")
+            print(f"❌ PDF Error: Invalid questions data - {e}")
+            flash("Invalid questions data for PDF generation", "error")
             return redirect(url_for("quiz.dashboard"))
 
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_font("Arial", size=12)
+        # Use reportlab for PDF generation
+        buffer = generate_pdf_with_reportlab_simple(questions, topic)
         
-        pdf.set_font("Arial", 'B', 16)
-        pdf.cell(200, 10, txt=f"Quiz: {topic}", ln=True, align='C')
-        pdf.ln(10)
+        # Create filename
+        filename = f"QuizGen_{topic.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d')}.pdf"
         
-        pdf.set_font("Arial", size=12)
-        pdf.cell(200, 10, txt=f"Total Questions: {len(questions)}", ln=True)
-        pdf.cell(200, 10, txt=f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M')}", ln=True)
-        pdf.ln(10)
-        
-        for i, q in enumerate(questions, 1):
-            pdf.set_font("Arial", 'B', 12)
-            pdf.multi_cell(0, 10, f"{i}. {q.get('question', 'Question')}")
-            pdf.set_font("Arial", size=12)
-            
-            if isinstance(q.get('options'), list) and q['options']:
-                for j, opt in enumerate(q['options']):
-                    pdf.cell(10)
-                    pdf.multi_cell(0, 8, f"{chr(65 + j)}. {opt}")
-            
-            pdf.set_font("Arial", 'I', 12)
-            pdf.multi_cell(0, 10, f"Answer: {q.get('answer', 'Not provided')}")
-            
-            if q.get('explanation'):
-                pdf.multi_cell(0, 10, f"Explanation: {q.get('explanation')}")
-            
-            pdf.set_font("Arial", size=12)
-            pdf.ln(5)
-
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
-            pdf.output(tmp.name)
-            tmp_path = tmp.name
-
         response = send_file(
-            tmp_path,
+            buffer,
             as_attachment=True,
-            download_name=f"QuizGen_{topic.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d')}.pdf",
-            mimetype='application/pdf'
+            download_name=filename,
+            mimetype='application/pdf',
+           
         )
-        
-        @response.call_on_close
-        def remove_temp_file():
-            try:
-                os.unlink(tmp_path)
-            except:
-                pass
                 
+        print(f"✅ PDF generated successfully using reportlab: {topic}")
         return response
 
     except Exception as e:
         print(f"❌ PDF Generation Error: {str(e)}")
-        flash("Failed to generate PDF", "error")
+        flash("Failed to generate PDF. Please try again.", "error")
         return redirect(url_for("quiz.dashboard"))
+
+def generate_pdf_with_reportlab_simple(questions, topic):
+    """Simple PDF generation using reportlab canvas"""
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+    
+    # Set starting position
+    y_position = height - 72  # Start from top with 1-inch margin
+    
+    # Title
+    c.setFont("Helvetica-Bold", 16)
+    c.setFillColorRGB(0.29, 0.04, 0.46)  # Purple color
+    title = f"Quiz: {topic}"
+    c.drawString(72, y_position, title[:80] + "..." if len(title) > 80 else title)
+    y_position -= 30
+    
+    # Quiz info
+    c.setFont("Helvetica", 10)
+    c.setFillColorRGB(0, 0, 0)  # Black color
+    c.drawString(72, y_position, f"Total Questions: {len(questions)}")
+    y_position -= 15
+    c.drawString(72, y_position, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    y_position -= 30
+    
+    # Process questions
+    for i, q in enumerate(questions, 1):
+        # Check if we need a new page
+        if y_position < 100:
+            c.showPage()
+            y_position = height - 72
+        
+        # Question number and text
+        c.setFont("Helvetica-Bold", 12)
+        question_text = f"{i}. {q.get('question', 'Question')}"
+        
+        # Split long questions into multiple lines
+        words = question_text.split()
+        lines = []
+        current_line = []
+        
+        for word in words:
+            test_line = ' '.join(current_line + [word])
+            if c.stringWidth(test_line, "Helvetica-Bold", 12) < (width - 144):  # Account for margins
+                current_line.append(word)
+            else:
+                if current_line:
+                    lines.append(' '.join(current_line))
+                current_line = [word]
+        if current_line:
+            lines.append(' '.join(current_line))
+        
+        # Draw question lines
+        for line in lines:
+            if y_position < 100:
+                c.showPage()
+                y_position = height - 72
+            c.drawString(72, y_position, line)
+            y_position -= 15
+        
+        # Options
+        c.setFont("Helvetica", 10)
+        options = q.get('options', [])
+        for j, opt in enumerate(options):
+            if y_position < 80:
+                c.showPage()
+                y_position = height - 72
+            option_text = f"{chr(65 + j)}. {opt}"
+            # Truncate very long options
+            if len(option_text) > 100:
+                option_text = option_text[:97] + "..."
+            c.drawString(85, y_position, option_text)
+            y_position -= 12
+        
+        # Answer
+        if y_position < 80:
+            c.showPage()
+            y_position = height - 72
+        c.setFont("Helvetica-Oblique", 10)
+        answer = q.get('answer', 'Not provided')
+        c.drawString(72, y_position, f"Answer: {answer}")
+        y_position -= 15
+        
+        # Explanation
+        explanation = q.get('explanation', '')
+        if explanation:
+            if y_position < 80:
+                c.showPage()
+                y_position = height - 72
+            c.setFont("Helvetica", 9)
+            expl_text = f"Explanation: {explanation}"
+            # Split long explanations
+            expl_words = expl_text.split()
+            expl_lines = []
+            current_expl_line = []
+            
+            for word in expl_words:
+                test_line = ' '.join(current_expl_line + [word])
+                if c.stringWidth(test_line, "Helvetica", 9) < (width - 144):
+                    current_expl_line.append(word)
+                else:
+                    if current_expl_line:
+                        expl_lines.append(' '.join(current_expl_line))
+                    current_expl_line = [word]
+            if current_expl_line:
+                expl_lines.append(' '.join(current_expl_line))
+            
+            for line in expl_lines:
+                if y_position < 80:
+                    c.showPage()
+                    y_position = height - 72
+                c.drawString(72, y_position, line)
+                y_position -= 10
+        
+        y_position -= 10  # Space between questions
+    
+    c.save()
+    buffer.seek(0)
+    return buffer

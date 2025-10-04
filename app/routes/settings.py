@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
 import json
 
 from app.models.database import get_db_connection, login_required
@@ -124,7 +124,30 @@ def update_preferences():
     conn.close()
     
     flash("Preferences updated successfully", "success")
-    return redirect(url_for("settings.settings"))
+    return jsonify({'success': True})
+
+@settings_bp.route("/update_theme_ajax", methods=["POST"])
+@login_required
+def update_theme_ajax():
+    """Update theme via AJAX - for instant switching"""
+    theme = request.json.get('theme', 'light')
+    
+    if theme not in ["light", "dark", "purple"]:
+        return jsonify({'success': False})
+    
+    conn = get_db_connection()
+    user = conn.execute('SELECT * FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+    preferences = json.loads(user['preferences'])
+    preferences['theme'] = theme
+    
+    conn.execute(
+        'UPDATE users SET preferences = ? WHERE id = ?',
+        (json.dumps(preferences), session['user_id'])
+    )
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True})
 
 @settings_bp.route("/delete_account", methods=["POST"])
 @login_required

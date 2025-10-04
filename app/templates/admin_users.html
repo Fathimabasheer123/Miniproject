@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - QuizGen Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .system-sidebar { 
+            background: linear-gradient(135deg, #2c3e50, #34495e); 
+            color: white; 
+            min-height: 100vh; 
+            padding: 0; 
+        }
+        .system-sidebar .nav-link { 
+            color: #ecf0f1; 
+            padding: 15px 20px; 
+            border-left: 4px solid transparent; 
+        }
+        .system-sidebar .nav-link:hover, .system-sidebar .nav-link.active { 
+            background: rgba(255,255,255,0.1); 
+            border-left-color: #3498db; 
+        }
+        .user-avatar { 
+            width: 40px; 
+            height: 40px; 
+            border-radius: 50%; 
+            background: #4b0b76; 
+            color: white; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-weight: bold; 
+        }
+        .stat-card {
+            border-radius: 10px;
+            transition: transform 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        .bg-gradient-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .bg-gradient-success { background: linear-gradient(135deg, #11998e, #38ef7d); }
+        .bg-gradient-info { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .bg-gradient-warning { background: linear-gradient(135deg, #f7971e, #ffd200); }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 system-sidebar">
+                <div class="p-3">
+                    <h4><i class="fas fa-cogs"></i> QuizGen System</h4>
+                    <hr class="bg-light">
+                </div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.admin_dashboard') }}">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('admin.manage_users') }}">
+                            <i class="fas fa-users"></i> User Management
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.manage_quizzes') }}">
+                            <i class="fas fa-file-alt"></i> Quiz Management
+                        </a>
+                    </li>
+                    <!-- <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.analytics') }}">
+                            <i class="fas fa-chart-bar"></i> Analytics
+                        </a>
+                    </li> -->
+                    <li class="nav-item mt-4">
+                        <a class="nav-link text-warning" href="{{ url_for('admin.exit_admin') }}">
+                            <i class="fas fa-sign-out-alt"></i> Exit Admin
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 ml-sm-auto p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2><i class="fas fa-users"></i> User Management</h2>
+                    <div class="text-muted">
+                        <i class="fas fa-user-shield"></i> System Controller
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="row mb-4">
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card stat-card bg-gradient-primary text-white shadow">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-uppercase mb-1">
+                                            Total Users</div>
+                                        <div class="h5 mb-0 font-weight-bold">{{ users|length }}</div>
+                                        <small>Regular users only</small>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-users fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card stat-card bg-gradient-success text-white shadow">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-uppercase mb-1">
+                                            Content Creators</div>
+                                        <div class="h5 mb-0 font-weight-bold">{{ users|selectattr("quizzes_created", "gt", 0)|list|length }}</div>
+                                        <small>Created quizzes</small>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-file-alt fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card stat-card bg-gradient-info text-white shadow">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-uppercase mb-1">
+                                            Active Learners</div>
+                                        <div class="h5 mb-0 font-weight-bold">{{ users|selectattr("quizzes_taken", "gt", 0)|list|length }}</div>
+                                        <small>Taken quizzes</small>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-graduation-cap fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card stat-card bg-gradient-warning text-white shadow">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-uppercase mb-1">
+                                            Inactive Users</div>
+                                        <div class="h5 mb-0 font-weight-bold">{{ users|selectattr("last_active", "none")|list|length }}</div>
+                                        <small>No activity</small>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-user-clock fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Users Table -->
+                <div class="card shadow">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-list"></i> All Regular Users</h5>
+                        <span class="badge bg-primary">{{ users|length }} users</span>
+                    </div>
+                    <div class="card-body">
+                        {% if users %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>User Profile</th>
+                                        <th>Quizzes Created</th>
+                                        <th>Quizzes Taken</th>
+                                        <th>Average Score</th>
+                                        <th>Last Active</th>
+                                        <th>Joined Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user_data in users %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="user-avatar me-3">
+                                                    {{ user_data.username[0]|upper }}
+                                                </div>
+                                                <div>
+                                                    <strong class="d-block">{{ user_data.username }}</strong>
+                                                    <small class="text-muted">{{ user_data.email }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{% if user_data.quizzes_created > 0 %}success{% else %}secondary{% endif %}">
+                                                {{ user_data.quizzes_created or 0 }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{% if user_data.quizzes_taken > 0 %}info{% else %}secondary{% endif %}">
+                                                {{ user_data.quizzes_taken or 0 }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{% if user_data.avg_score >= 80 %}success{% elif user_data.avg_score >= 60 %}warning{% else %}danger{% endif %}">
+                                                {{ "%.1f"|format(user_data.avg_score or 0) }}%
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if user_data.last_active %}
+                                                <small class="text-muted">{{ user_data.last_active[:10] }}</small>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Never</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">{{ user_data.created_at[:10] }}</small>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-danger" 
+                                                    onclick="deleteUser({{ user_data.id }}, '{{ user_data.username }}')"
+                                                    title="Delete User">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if total_pages > 1 %}
+                        <nav class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                                    <a class="page-link" href="{{ url_for('admin.manage_users', page=page-1) if page > 1 else '#' }}">Previous</a>
+                                </li>
+                                
+                                {% for p in range(1, total_pages + 1) %}
+                                    {% if p >= page-2 and p <= page+2 %}
+                                    <li class="page-item {% if p == page %}active{% endif %}">
+                                        <a class="page-link" href="{{ url_for('admin.manage_users', page=p) }}">{{ p }}</a>
+                                    </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                                    <a class="page-link" href="{{ url_for('admin.manage_users', page=page+1) if page < total_pages else '#' }}">Next</a>
+                                </li>
+                            </ul>
+                        </nav>
+                        {% endif %}
+                        
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">No Users Found</h4>
+                            <p class="text-muted">There are no regular users in the system yet.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card shadow">
+                            <div class="card-header bg-white">
+                                <h6 class="mb-0"><i class="fas fa-bolt"></i> Quick Actions</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row text-center">
+                                    <div class="col-md-4 mb-3">
+                                        <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-primary w-100">
+                                            <i class="fas fa-tachometer-alt"></i><br>
+                                            Dashboard
+                                        </a>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <a href="{{ url_for('admin.manage_quizzes') }}" class="btn btn-outline-success w-100">
+                                            <i class="fas fa-file-alt"></i><br>
+                                            Manage Quizzes
+                                        </a>
+                                    </div>
+                                    <!-- <div class="col-md-4 mb-3">
+                                        <a href="{{ url_for('admin.analytics') }}" class="btn btn-outline-info w-100">
+                                            <i class="fas fa-chart-bar"></i><br>
+                                            View Analytics
+                                        </a>
+                                    </div> -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function deleteUser(userId, username) {
+            if (confirm(`Are you sure you want to delete user "${username}"?\n\nThis will permanently delete:\n• User account\n• All quizzes created by this user\n• All quiz attempts by this user\n\nThis action cannot be undone!`)) {
+                fetch(`/admin/api/delete_user/${userId}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('User deleted successfully!');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    alert('Error deleting user: ' + error);
+                });
+            }
+        }
+
+        // Add some interactive features
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add hover effects to table rows
+            const tableRows = document.querySelectorAll('tbody tr');
+            tableRows.forEach(row => {
+                row.addEventListener('mouseenter', function() {
+                    this.style.backgroundColor = '#f8f9fa';
+                });
+                row.addEventListener('mouseleave', function() {
+                    this.style.backgroundColor = '';
+                });
+            });
+
+            // Add loading state to delete buttons
+            const deleteButtons = document.querySelectorAll('.btn-outline-danger');
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const originalHTML = this.innerHTML;
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    this.disabled = true;
+                    
+                    // Reset after 3 seconds if still processing
+                    setTimeout(() => {
+                        this.innerHTML = originalHTML;
+                        this.disabled = false;
+                    }, 3000);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

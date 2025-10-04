@@ -315,12 +315,41 @@
             
             <div class="summary-item">
                 <strong>Quiz Title:</strong>
-                <span>{{ attempt.title or "Generated Quiz" }}</span>
+                <span>
+                    {% if attempt.title and attempt.title != 'Generated Quiz' %}
+                        {{ attempt.title }}
+                    {% elif attempt.context %}
+                        {# Extract meaningful title from context #}
+                        {% set context = attempt.context %}
+                        {% set sentences = context.split('.') %}
+                        {% set meaningful_title = '' %}
+                        {% for sentence in sentences %}
+                            {% if sentence.strip() and sentence|length > 20 and sentence.split()|length >= 3 and not meaningful_title %}
+                                {% set meaningful_title = sentence.strip()[:50] + '...' %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ meaningful_title if meaningful_title else 'Study Material Quiz' }}
+                    {% else %}
+                        Generated Quiz
+                    {% endif %}
+                </span>
             </div>
             
             <div class="summary-item">
                 <strong>Date Completed:</strong>
-                <span>{{ attempt.formatted_date if attempt.formatted_date else "Unknown date" }}</span>
+                <span>
+                    {% if attempt.completed_at %}
+                        {% if 'T' in attempt.completed_at %}
+                            {# ISO format date #}
+                            {{ attempt.completed_at.split('T')[0]|replace('-', '/') }} at {{ attempt.completed_at.split('T')[1][:5] }}
+                        {% else %}
+                            {# SQLite datetime format #}
+                            {{ attempt.completed_at[:16]|replace(' ', ' at ') }}
+                        {% endif %}
+                    {% else %}
+                        <span class="text-muted">Unknown date</span>
+                    {% endif %}
+                </span>
             </div>
             
             <div class="summary-item">
@@ -339,8 +368,14 @@
             <div class="summary-item">
                 <strong>Time Spent:</strong>
                 <span>
-                    {% if attempt.time_spent %}
-                        {{ attempt.time_spent }} seconds
+                    {% if attempt.time_spent and attempt.time_spent > 0 %}
+                        {% set minutes = (attempt.time_spent // 60) %}
+                        {% set seconds = (attempt.time_spent % 60) %}
+                        {% if minutes > 0 %}
+                            {{ minutes }}m {{ seconds }}s
+                        {% else %}
+                            {{ seconds }} seconds
+                        {% endif %}
                     {% else %}
                         <span class="text-muted">Not recorded</span>
                     {% endif %}
@@ -355,30 +390,42 @@
                  style="opacity: 1; transform: translateY(0);">
                 <div class="question-number">
                     <span>Question {{ loop.index }}</span>
-                    {% if question.type %}
-                        <span class="question-type-badge {{ question.type|replace(' ', '-')|lower }}">
-                            {{ question.type }}
+                    {% if question.question_type %}
+                        <span class="question-type-badge {{ question.question_type|replace(' ', '-')|lower }}">
+                            {{ question.question_type }}
                         </span>
                     {% endif %}
                 </div>
                 
                 <div class="question-text">{{ question.question_text }}</div>
                 
-                <div class="options-list">
-                    {% for option in question.options %}
-                        <div class="option-item 
-                            {% if option == question.correct_answer %}correct{% endif %}
-                            {% if option == question.user_answer and not question.is_correct %}incorrect{% endif %}
-                            {% if option == question.user_answer %}selected{% endif %}">
-                            {{ option }}
-                            {% if option == question.correct_answer %}
-                                <i class="fas fa-check-circle float-end text-success"></i>
-                            {% elif option == question.user_answer and not question.is_correct %}
-                                <i class="fas fa-times-circle float-end text-danger"></i>
-                            {% endif %}
+                {% if question.options and question.options|length > 0 %}
+                    <div class="options-list">
+                        {% for option in question.options %}
+                            <div class="option-item 
+                                {% if option == question.correct_answer %}correct{% endif %}
+                                {% if option == question.user_answer and not question.is_correct %}incorrect{% endif %}
+                                {% if option == question.user_answer %}selected{% endif %}">
+                                {{ option }}
+                                {% if option == question.correct_answer %}
+                                    <i class="fas fa-check-circle float-end text-success"></i>
+                                {% elif option == question.user_answer and not question.is_correct %}
+                                    <i class="fas fa-times-circle float-end text-danger"></i>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {# For fill-in-the-blank or statement questions #}
+                    <div class="options-list">
+                        <div class="option-item {% if question.is_correct %}correct{% else %}incorrect{% endif %}">
+                            <strong>Your Answer:</strong> {{ question.user_answer or "Not answered" }}
                         </div>
-                    {% endfor %}
-                </div>
+                        <div class="option-item correct">
+                            <strong>Correct Answer:</strong> {{ question.correct_answer }}
+                        </div>
+                    </div>
+                {% endif %}
                 
                 <div class="answer-feedback {% if question.is_correct %}feedback-correct{% else %}feedback-incorrect{% endif %}">
                     {% if question.is_correct %}
@@ -387,7 +434,7 @@
                     {% else %}
                         <i class="fas fa-times-circle"></i> 
                         <strong>Incorrect.</strong> 
-                        Your answer: <strong>{{ question.user_answer }}</strong> | 
+                        Your answer: <strong>{{ question.user_answer or "Not answered" }}</strong> | 
                         Correct answer: <strong>{{ question.correct_answer }}</strong>
                     {% endif %}
                 </div>

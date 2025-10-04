@@ -19,6 +19,29 @@
       --success-color: #10b981;
       --warning-color: #f59e0b;
       --danger-color: #ef4444;
+      --border-color: #e2e8f0;
+    }
+    
+    [data-theme="dark"] {
+      --primary-color: #8b5cf6;
+      --secondary-color: #7c3aed;
+      --accent-color: #a78bfa;
+      --light-bg: #0f172a;
+      --card-bg: #1e293b;
+      --text-color: #f1f5f9;
+      --text-light: #cbd5e1;
+      --border-color: #334155;
+    }
+    
+    [data-theme="purple"] {
+      --primary-color: #7e22ce;
+      --secondary-color: #9333ea;
+      --accent-color: #a855f7;
+      --light-bg: #faf5ff;
+      --card-bg: #ffffff;
+      --text-color: #581c87;
+      --text-light: #7e22ce;
+      --border-color: #e9d5ff;
     }
     
     body {
@@ -27,10 +50,11 @@
       color: var(--text-color);
       padding: 20px;
       min-height: 100vh;
+      transition: all 0.3s ease;
     }
     
     .settings-container {
-      max-width: 800px;
+      max-width: 900px;
       margin: 0 auto;
     }
     
@@ -53,42 +77,29 @@
       background: var(--card-bg);
       border-radius: 16px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      border: 1px solid var(--border-color);
       overflow: hidden;
-      margin-bottom: 30px;
+      margin-bottom: 25px;
+      transition: all 0.3s ease;
     }
     
-    .settings-section {
-      padding: 30px;
-      border-bottom: 1px solid #e2e8f0;
-    }
-    
-    .settings-section:last-child {
+    .card-header {
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 20px 30px;
       border-bottom: none;
     }
     
-    .section-header {
-      display: flex;
-      align-items: center;
-      margin-bottom: 25px;
-    }
-    
-    .section-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: rgba(75, 11, 118, 0.1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-right: 15px;
-      color: var(--primary-color);
-      font-size: 18px;
-    }
-    
-    .section-title {
-      font-weight: 600;
-      color: var(--primary-color);
+    .card-header h4 {
       margin: 0;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .card-body {
+      padding: 30px;
     }
     
     .form-label {
@@ -97,16 +108,20 @@
       margin-bottom: 8px;
     }
     
-    .form-control {
+    .form-control, .form-select {
       border-radius: 8px;
       padding: 12px 15px;
-      border: 1px solid #d1d5db;
+      border: 1px solid var(--border-color);
+      background: var(--card-bg);
+      color: var(--text-color);
       transition: all 0.3s;
     }
     
-    .form-control:focus {
+    .form-control:focus, .form-select:focus {
       border-color: var(--primary-color);
       box-shadow: 0 0 0 3px rgba(75, 11, 118, 0.1);
+      background: var(--card-bg);
+      color: var(--text-color);
     }
     
     .btn-primary {
@@ -119,7 +134,7 @@
     }
     
     .btn-primary:hover {
-      background: linear-gradient(90deg, #3a095c, #4a148c);
+      background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
       transform: translateY(-2px);
       box-shadow: 0 4px 8px rgba(75, 11, 118, 0.3);
     }
@@ -156,10 +171,74 @@
       box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
     }
     
-    .divider {
-      height: 1px;
-      background: #e2e8f0;
-      margin: 30px 0;
+    .btn-outline-primary {
+      border: 2px solid var(--primary-color);
+      color: var(--primary-color);
+      background: transparent;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-weight: 500;
+      transition: all 0.3s;
+    }
+    
+    .btn-outline-primary:hover {
+      background: var(--primary-color);
+      color: white;
+      transform: translateY(-2px);
+    }
+    
+    .theme-selector {
+      display: flex;
+      gap: 15px;
+      margin-top: 15px;
+    }
+    
+    .theme-option {
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      cursor: pointer;
+      border: 3px solid transparent;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .theme-option:hover {
+      transform: scale(1.05);
+    }
+    
+    .theme-option.active {
+      border-color: var(--primary-color);
+    }
+    
+    .theme-option::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 8px;
+    }
+    
+    .theme-light {
+      background: linear-gradient(135deg, #f9fafc 0%, #f1f5f9 100%);
+    }
+    
+    .theme-dark {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    }
+    
+    .theme-purple {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    }
+    
+    .theme-label {
+      text-align: center;
+      font-size: 12px;
+      margin-top: 5px;
+      color: var(--text-light);
     }
     
     .danger-zone {
@@ -181,43 +260,26 @@
       margin-bottom: 20px;
     }
     
-    .theme-selector {
-      display: flex;
-      gap: 15px;
-      margin-top: 15px;
+    .alert {
+      border-radius: 12px;
+      border: none;
+      margin-bottom: 20px;
     }
     
-    .theme-option {
-      width: 40px;
-      height: 40px;
-      border-radius: 8px;
-      cursor: pointer;
-      border: 2px solid transparent;
-      transition: all 0.3s;
+    .alert-success {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success-color);
+      border-left: 4px solid var(--success-color);
     }
     
-    .theme-option:hover {
-      transform: scale(1.05);
-    }
-    
-    .theme-option.active {
-      border-color: var(--primary-color);
-    }
-    
-    .theme-light {
-      background: linear-gradient(135deg, #f9fafc 0%, #f1f5f9 100%);
-    }
-    
-    .theme-dark {
-      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    }
-    
-    .theme-purple {
-      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    .alert-danger {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--danger-color);
+      border-left: 4px solid var(--danger-color);
     }
     
     @media (max-width: 768px) {
-      .settings-section {
+      .card-body {
         padding: 20px;
       }
       
@@ -227,7 +289,7 @@
     }
   </style>
 </head>
-<body>
+<body data-theme="{{ current_theme }}">
   <div class="settings-container">
     <div class="settings-header">
       <h2><i class="fas fa-cog"></i> Settings</h2>
@@ -247,21 +309,19 @@
       {% endif %}
     {% endwith %}
 
+    <!-- Navigation -->
     <div class="navigation-buttons mb-4">
-    <a href="{{ url_for('quiz.dashboard') }}" class="btn btn-outline-primary">
+      <a href="{{ url_for('quiz.dashboard') }}" class="btn btn-outline-primary">
         <i class="fas fa-arrow-left"></i> Back to Dashboard
-    </a>
-</div>
+      </a>
+    </div>
+
+    <!-- Profile Settings Card -->
     <div class="settings-card">
-      <!-- Profile Settings -->
-      <div class="settings-section">
-        <div class="section-header">
-          <div class="section-icon">
-            <i class="fas fa-user"></i>
-          </div>
-          <h4 class="section-title">Profile Information</h4>
-        </div>
-        
+      <div class="card-header">
+        <h4><i class="fas fa-user"></i> Profile Information</h4>
+      </div>
+      <div class="card-body">
         <form action="{{ url_for('settings.update_profile') }}" method="POST">
           <div class="mb-3">
             <label class="form-label">Username</label>
@@ -277,18 +337,14 @@
           </button>
         </form>
       </div>
+    </div>
 
-      <div class="divider"></div>
-
-      <!-- Password Change -->
-      <div class="settings-section">
-        <div class="section-header">
-          <div class="section-icon">
-            <i class="fas fa-lock"></i>
-          </div>
-          <h4 class="section-title">Change Password</h4>
-        </div>
-        
+    <!-- Password Change Card -->
+    <div class="settings-card">
+      <div class="card-header">
+        <h4><i class="fas fa-lock"></i> Change Password</h4>
+      </div>
+      <div class="card-body">
         <form action="{{ url_for('settings.change_password') }}" method="POST">
           <div class="mb-3">
             <label class="form-label">Current Password</label>
@@ -307,34 +363,39 @@
           </button>
         </form>
       </div>
+    </div>
 
-      <div class="divider"></div>
-
-      <!-- Preferences -->
-      <div class="settings-section">
-        <div class="section-header">
-          <div class="section-icon">
-            <i class="fas fa-palette"></i>
-          </div>
-          <h4 class="section-title">Preferences</h4>
-        </div>
-        
-        <form action="{{ url_for('settings.update_preferences') }}" method="POST">
-          <div class="mb-3">
-            <label class="form-label">Theme</label>
-            <select class="form-select" name="theme">
-              <option value="light" {% if current_theme == 'light' %}selected{% endif %}>Light</option>
-              <option value="dark" {% if current_theme == 'dark' %}selected{% endif %}>Dark</option>
-              <option value="purple" {% if current_theme == 'purple' %}selected{% endif %}>Purple</option>
+    <!-- Preferences Card -->
+    <div class="settings-card">
+      <div class="card-header">
+        <h4><i class="fas fa-palette"></i> Preferences</h4>
+      </div>
+      <div class="card-body">
+        <form id="preferences-form">
+          <div class="mb-4">
+            <label class="form-label">Theme Selection</label>
+            <select class="form-select" name="theme" id="theme-select">
+              <option value="light" {% if current_theme == 'light' %}selected{% endif %}>Light Theme</option>
+              <option value="dark" {% if current_theme == 'dark' %}selected{% endif %}>Dark Theme</option>
+              <option value="purple" {% if current_theme == 'purple' %}selected{% endif %}>Purple Theme</option>
             </select>
           </div>
           
-          <div class="mb-3">
-            <label class="form-label">Quick Theme Selection</label>
+          <div class="mb-4">
+            <label class="form-label">Quick Theme Preview</label>
             <div class="theme-selector">
-              <div class="theme-option theme-light {% if current_theme == 'light' %}active{% endif %}" data-theme="light" title="Light Theme"></div>
-              <div class="theme-option theme-dark {% if current_theme == 'dark' %}active{% endif %}" data-theme="dark" title="Dark Theme"></div>
-              <div class="theme-option theme-purple {% if current_theme == 'purple' %}active{% endif %}" data-theme="purple" title="Purple Theme"></div>
+              <div class="theme-option-container">
+                <div class="theme-option theme-light {% if current_theme == 'light' %}active{% endif %}" data-theme="light" title="Light Theme"></div>
+                <div class="theme-label">Light</div>
+              </div>
+              <div class="theme-option-container">
+                <div class="theme-option theme-dark {% if current_theme == 'dark' %}active{% endif %}" data-theme="dark" title="Dark Theme"></div>
+                <div class="theme-label">Dark</div>
+              </div>
+              <div class="theme-option-container">
+                <div class="theme-option theme-purple {% if current_theme == 'purple' %}active{% endif %}" data-theme="purple" title="Purple Theme"></div>
+                <div class="theme-label">Purple</div>
+              </div>
             </div>
           </div>
           
@@ -345,16 +406,19 @@
       </div>
     </div>
 
-    <!-- Danger Zone -->
+    <!-- Danger Zone Card -->
     <div class="settings-card">
-      <div class="settings-section">
+      <div class="card-header" style="background: linear-gradient(90deg, #ef4444, #dc2626);">
+        <h4><i class="fas fa-exclamation-triangle"></i> Danger Zone</h4>
+      </div>
+      <div class="card-body">
         <div class="danger-zone">
-          <h5><i class="fas fa-exclamation-triangle"></i> Danger Zone</h5>
-          <p>Once you delete your account, there is no going back. Please be certain.</p>
+          <h5><i class="fas fa-exclamation-triangle"></i> Permanent Account Deletion</h5>
+          <p>Once you delete your account, there is no going back. All your data, quizzes, and progress will be permanently lost.</p>
           <form action="{{ url_for('settings.delete_account') }}" method="POST" 
-                onsubmit="return confirm('Are you sure you want to delete your account? This cannot be undone!');">
+                onsubmit="return confirm('Are you absolutely sure? This will permanently delete your account and all your data!');">
             <button type="submit" class="btn btn-danger">
-              <i class="fas fa-trash-alt"></i> Delete My Account
+              <i class="fas fa-trash-alt"></i> Delete My Account Permanently
             </button>
           </form>
         </div>
@@ -363,9 +427,17 @@
   </div>
 
   <script>
+    // Apply current theme on load
+    document.addEventListener('DOMContentLoaded', function() {
+      const currentTheme = '{{ current_theme }}';
+      applyTheme(currentTheme);
+    });
+
     // Theme selector functionality
     document.querySelectorAll('.theme-option').forEach(option => {
       option.addEventListener('click', function() {
+        const themeValue = this.getAttribute('data-theme');
+        
         // Remove active class from all options
         document.querySelectorAll('.theme-option').forEach(opt => {
           opt.classList.remove('active');
@@ -375,10 +447,98 @@
         this.classList.add('active');
         
         // Update the select dropdown
-        const themeValue = this.getAttribute('data-theme');
-        document.querySelector('select[name="theme"]').value = themeValue;
+        document.querySelector('#theme-select').value = themeValue;
+        
+        // Apply theme immediately
+        applyTheme(themeValue);
+        
+        // Save to server via AJAX
+        saveTheme(themeValue);
       });
     });
+
+    // Select dropdown change
+    document.querySelector('#theme-select').addEventListener('change', function() {
+      const themeValue = this.value;
+      applyTheme(themeValue);
+      
+      // Update theme options
+      document.querySelectorAll('.theme-option').forEach(opt => {
+        opt.classList.remove('active');
+        if (opt.getAttribute('data-theme') === themeValue) {
+          opt.classList.add('active');
+        }
+      });
+      
+      saveTheme(themeValue);
+    });
+
+    // Form submission
+    document.querySelector('#preferences-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      
+      fetch("{{ url_for('settings.update_preferences') }}", {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          showNotification('Preferences saved successfully!', 'success');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error saving preferences', 'error');
+      });
+    });
+
+    function applyTheme(theme) {
+      document.body.setAttribute('data-theme', theme);
+      localStorage.setItem('quizgen-theme', theme);
+    }
+
+    function saveTheme(theme) {
+      fetch("{{ url_for('settings.update_theme_ajax') }}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ theme: theme })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (!data.success) {
+          console.error('Failed to save theme');
+        }
+      })
+      .catch(error => {
+        console.error('Error saving theme:', error);
+      });
+    }
+
+    function showNotification(message, type) {
+      // Create notification element
+      const notification = document.createElement('div');
+      notification.className = `alert alert-${type} alert-dismissible fade show`;
+      notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> 
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      `;
+      
+      // Insert at the top of the container
+      const container = document.querySelector('.settings-container');
+      container.insertBefore(notification, container.firstChild);
+      
+      // Auto remove after 3 seconds
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.remove();
+        }
+      }, 3000);
+    }
   </script>
 </body>
 </html>
