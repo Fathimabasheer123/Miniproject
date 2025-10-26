@@ -1,0 +1,745 @@
+
+    
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuizGen Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #4b0b76;
+      --secondary-color: #6a1b9a;
+      --accent-color: #8e44ad;
+      --light-bg: #f4f7fb;
+      --card-bg: #ffffff;
+      --text-color: #334155;
+      --text-light: #64748b;
+      --success-color: #10b981;
+      --warning-color: #f59e0b;
+      --info-color: #0ea5e9;
+    }
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--light-bg);
+      color: var(--text-color);
+      margin: 0;
+      padding: 0;
+    }
+
+    .dashboard-container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar Styles */
+    .sidebar {
+      width: 250px;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 20px 0;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+    }
+    
+    .sidebar-header {
+      padding: 0 20px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 20px;
+    }
+    
+    .sidebar-header h3 {
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .sidebar-menu {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .sidebar-menu li {
+      margin-bottom: 5px;
+    }
+    
+    .sidebar-menu a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: white;
+      padding: 12px 20px;
+      text-decoration: none;
+      transition: all 0.3s;
+      border-left: 4px solid transparent;
+    }
+    
+    .sidebar-menu a:hover, .sidebar-menu a.active {
+      background: rgba(255, 255, 255, 0.1);
+      border-left: 4px solid white;
+    }
+    
+    .sidebar-menu i {
+      width: 20px;
+      text-align: center;
+    }
+
+    /* Main Content Styles */
+    .main-content {
+      flex: 1;
+      margin-left: 250px;
+      padding: 30px;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .welcome-text h2 {
+      font-weight: 600;
+      color: var(--primary-color);
+      margin-bottom: 5px;
+    }
+    
+    .welcome-text p {
+      color: var(--text-light);
+      margin: 0;
+    }
+    
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--primary-color);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+    }
+
+    /* Card Styles */
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      border: none;
+      margin-bottom: 25px;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .card-header {
+      background: transparent;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 20px;
+      font-weight: 600;
+      color: var(--primary-color);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .card-body {
+      padding: 20px;
+    }
+
+    /* Stats Section */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .stat-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 15px;
+      font-size: 20px;
+    }
+    
+    .stat-icon.quizzes {
+      background: rgba(79, 70, 229, 0.1);
+      color: #4f46e5;
+    }
+    
+    .stat-icon.score {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success-color);
+    }
+    
+    .stat-icon.created {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--warning-color);
+    }
+    
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+    
+    .stat-label {
+      color: var(--text-light);
+      font-size: 14px;
+    }
+
+    /* Progress Section */
+    .progress-container {
+      margin-bottom: 30px;
+    }
+    
+    .progress-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+    
+    .progress-title {
+      font-weight: 600;
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .progress-bar-container {
+      background: #e5e7eb;
+      border-radius: 10px;
+      height: 10px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    
+    .progress-bar {
+      height: 100%;
+      border-radius: 10px;
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    }
+    
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      color: var(--text-light);
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .action-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      text-align: center;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+    
+    .action-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .action-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: rgba(79, 70, 229, 0.1);
+      color: #4f46e5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 15px;
+      font-size: 20px;
+    }
+    
+    .action-title {
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+    
+    .action-desc {
+      color: var(--text-light);
+      font-size: 14px;
+    }
+
+    /* Recent Quizzes */
+    .quiz-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .quiz-item:last-child {
+      border-bottom: none;
+    }
+    
+    .quiz-info h4 {
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+    
+    .quiz-meta {
+      display: flex;
+      gap: 15px;
+      color: var(--text-light);
+      font-size: 14px;
+    }
+    
+    .quiz-date {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .view-quiz {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .view-quiz:hover {
+      text-decoration: underline;
+    }
+
+    /* Achievements */
+    .badges-container {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+    
+    .badge {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      position: relative;
+    }
+    
+    .badge.locked {
+      background: #e5e7eb;
+      color: #9ca3af;
+    }
+    
+    .badge-tooltip {
+      position: absolute;
+      bottom: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #374151;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+    
+    .badge:hover .badge-tooltip {
+      opacity: 1;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 992px) {
+      .sidebar {
+        width: 200px;
+      }
+      
+      .main-content {
+        margin-left: 200px;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .dashboard-container {
+        flex-direction: column;
+      }
+      
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+      }
+      
+      .main-content {
+        margin-left: 0;
+      }
+      
+      .sidebar-menu {
+        display: flex;
+        overflow-x: auto;
+        padding-bottom: 10px;
+      }
+      
+      .sidebar-menu li {
+        flex-shrink: 0;
+        margin-bottom: 0;
+      }
+      
+      .sidebar-menu a {
+        border-left: none;
+        border-bottom: 4px solid transparent;
+        padding: 10px 15px;
+      }
+      
+      .sidebar-menu a:hover, .sidebar-menu a.active {
+        border-left: none;
+        border-bottom: 4px solid white;
+      }
+      
+      .stats-grid,
+      .quick-actions {
+        grid-template-columns: 1fr;
+      }
+    }
+  
+  </style>
+</head>
+<body>
+  <div class="dashboard-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h3><i class="fas fa-book-open"></i> QuizGen</h3>
+      </div>
+      <ul class="sidebar-menu">
+         <li><a href="{{ url_for('quiz.dashboard') }}" class="active"><i class="fas fa-home"></i> Dashboard</a></li>
+        <li><a href="{{ url_for('quiz.upload_file') }}" onclick="showSection('uploadSection')"><i class="fas fa-file-upload"></i> Create Quiz</a></li>
+        <li><a href="{{ url_for('progress.history') }}"><i class="fas fa-history"></i> History</a></li>
+        <li><a href="{{ url_for('progress.progress') }}"><i class="fas fa-chart-line"></i>Analytics</a></li>
+        <li><a href="{{ url_for('settings.settings') }}"><i class="fas fa-cog"></i> Settings</a></li>
+        <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+      </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="header">
+        <div class="welcome-text">
+          <h2>Welcome back, {{ session['user'] }}!</h2>
+          <p>Ready to continue your learning journey?</p>
+        </div>
+        <div class="user-info">
+          <div class="user-avatar">{{ session['user'][0]|upper }}</div>
+          <span>{{ session['user'] }}</span>
+        </div>
+      </div>
+
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+              <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }}"></i> 
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <!-- Stats Section -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon quizzes">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div class="stat-value">{{ stats.quizzes_completed }}</div>
+          <div class="stat-label">Quizzes Completed</div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon score">
+            <i class="fas fa-chart-line"></i>
+          </div>
+          <div class="stat-value">{{ stats.average_score }}%</div>
+          <div class="stat-label">Average Score</div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon created">
+            <i class="fas fa-plus-circle"></i>
+          </div>
+          <div class="stat-value">{{ stats.quizzes_created }}</div>
+          <div class="stat-label">Quizzes Created</div>
+        </div>
+      </div>
+
+      <!-- Progress Section -->
+      <div class="progress-container">
+        <div class="progress-card">
+          <div class="progress-title">
+            <span>Your Learning Progress</span>
+            <span>{{ stats.progress_percentage }}% Complete</span>
+          </div>
+          <div class="progress-bar-container">
+            <div class="progress-bar" style="width: {{ stats.progress_percentage }}%"></div>
+          </div>
+          <div class="progress-info">
+            <span>{{ stats.quizzes_completed }} of {{ stats.quizzes_goal }} quizzes completed</span>
+            <span>{{ stats.days_streak }} day streak</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <div class="action-card" onclick="showSection('uploadSection')">
+          <div class="action-icon">
+            <i class="fas fa-plus"></i>
+          </div>
+          <div class="action-title">Create New Quiz</div>
+          <div class="action-desc">Upload notes to generate a quiz</div>
+        </div>
+        
+        <div class="action-card" onclick="window.location.href='{{ url_for('progress.history') }}'">
+          <div class="action-icon">
+            <i class="fas fa-list"></i>
+          </div>
+          <div class="action-title">My Quizzes</div>
+          <div class="action-desc">View all your created quizzes</div>
+        </div>
+        
+        <div class="action-card" onclick="window.location.href='{{ url_for('progress.progress') }}'">
+          <div class="action-icon">
+            <i class="fas fa-trophy"></i>
+          </div>
+          <div class="action-title">Achievements</div>
+          <div class="action-desc">View your progress</div>
+        </div>
+      </div>
+
+      <div class="row">
+       <!-- Recent Quizzes -->
+
+      <!-- Upload Section -->
+      <div id="uploadSection" class="card d-none">
+        <div class="card-header">
+          <i class="fas fa-file-upload"></i> Upload Your Study Notes
+        </div>
+        <div class="card-body">
+          <form id="uploadForm" method="POST" enctype="multipart/form-data">
+            <div class="mb-3">
+              <label for="fileInput" class="form-label">Select your study material</label>
+              <input type="file" class="form-control" id="fileInput" name="file" accept=".pdf,.txt,.pptx,.docx,.doc,.png,.jpg,.jpeg,.tiff,.bmp,.gif" required>
+            </div>
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-cloud-upload-alt"></i> Upload & Extract
+            </button>
+          </form>
+          
+          <small class="text-muted">Supported formats: PDF, TXT, PPTX, DOCX, DOC, Images (PNG, JPG, etc.)</small>
+        </div>
+      </div>
+
+      <!-- Generate Quiz Section -->
+      <div id="generateSection" class="card d-none">
+        <div class="card-header">
+          <i class="fas fa-tasks"></i> Generate Quiz
+        </div>
+        <div class="card-body">
+          <form id="generateForm">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="num_questions" class="form-label">Number of Questions</label>
+                <input type="number" id="num_questions" class="form-control" value="10" min="5" max="30">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="difficulty" class="form-label">Difficulty Level</label>
+                <select id="difficulty" class="form-select">
+                  <option value="easy">Easy</option>
+                  <option value="medium" selected>Medium</option>
+                  <option value="hard">Hard</option>
+                </select>
+              </div>
+            </div>
+            <div class="mb-3">
+              <div class="form-text">
+                <i class="fas fa-info-circle"></i> Questions will include a mix of Multiple Choice, True/False, and Fill in the Blanks types
+              </div>
+            </div>
+            <button type="submit" class="btn btn-success">
+              <i class="fas fa-magic"></i> Generate Quiz with Gemini AI
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <footer>
+        <p>© 2025 QuizGen |All rights reserved.</p>
+      </footer>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    let extractedContext = "";
+
+function showSection(sectionId) {
+    // Hide all sections except stats
+    document.querySelectorAll('.card').forEach(card => {
+        if (!card.classList.contains('stats-card')) {
+            card.classList.add('d-none');
+        }
+    });
+    
+    // Show the selected section
+    const section = document.getElementById(sectionId);
+    if (section) {
+        section.classList.remove('d-none');
+    }
+}
+
+// Handle file upload
+document.getElementById("uploadForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    // Show loading state
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Extracting Content...';
+    submitBtn.disabled = true;
+
+    const formData = new FormData();
+    formData.append("file", document.getElementById("fileInput").files[0]);
+
+    try {
+        const res = await fetch("{{ url_for('quiz.upload_file') }}", { 
+            method: "POST", 
+            body: formData 
+        });
+        const data = await res.json();
+
+        if (data.error) {
+            alert("Error: " + data.error);
+        } else if (data.context) {
+            extractedContext = data.context;
+            alert("✅ Notes uploaded and extracted successfully!");
+            showSection('generateSection');
+        } else {
+            alert("Error: Unexpected response from server.");
+        }
+    } catch (error) {
+        alert("Error: " + error.message);
+    } finally {
+        // Reset button
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }
+});
+
+// Handle quiz generation
+document.getElementById("generateForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    // Show loading state
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating with Gemini AI...';
+    submitBtn.disabled = true;
+
+    const payload = {
+        num_questions: document.getElementById("num_questions").value,
+        difficulty: document.getElementById("difficulty").value,
+        context: extractedContext,
+        filename: extractedFilename // Add this if you want to use filename
+    };
+
+    try {
+        const res = await fetch("{{ url_for('quiz.generate_questions') }}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (data.questions) {
+            // Redirect to interactive quiz
+            if (data.redirect) {
+                window.location.href = data.redirect;
+            } else {
+                window.location.href = "{{ url_for('quiz.take_quiz') }}";
+            }
+        } else {
+            alert("Error: " + (data.error || "Failed to generate questions"));
+        }
+    } catch (error) {
+        alert("Error: " + error.message);
+    } finally {
+        // Reset button
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }
+});
+
+// Make quick action cards clickable
+document.querySelectorAll('.action-card').forEach(card => {
+    card.style.cursor = 'pointer';
+    card.addEventListener('click', function() {
+        if (this.querySelector('.action-title').textContent.includes('Create')) {
+            showSection('uploadSection');
+        } else if (this.querySelector('.action-title').textContent.includes('My Quizzes')) {
+            window.location.href = "{{ url_for('progress.history') }}";
+        } else if (this.querySelector('.action-title').textContent.includes('Achievements')) {
+            window.location.href = "{{ url_for('progress.progress') }}";
+        }
+    });
+});
+  </script>
+</body>
+</html>
+    

@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz History - QuizGen</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4b0b76;
+            --secondary-color: #6a1b9a;
+            --light-bg: #f4f7fb;
+            --card-bg: #ffffff;
+            --text-color: #334155;
+            --text-light: #64748b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #0ea5e9;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--light-bg);
+            color: var(--text-color);
+            padding: 20px;
+        }
+        
+        .history-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .history-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .history-header h1 {
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .search-bar {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .search-bar input {
+            border-radius: 25px;
+            padding: 10px 20px 10px 45px;
+            border: 1px solid #ddd;
+            width: 100%;
+        }
+        
+        .search-bar i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+        }
+
+        .filter-options {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        
+        .filter-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .exam-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+            overflow: hidden;
+            padding: 20px;
+            border-left: 4px solid var(--primary-color);
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+        }
+        
+        .exam-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .exam-title {
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .title-editable {
+            cursor: pointer;
+            border-bottom: 1px dashed transparent;
+            transition: border-color 0.3s;
+        }
+        
+        .title-editable:hover {
+            border-color: var(--primary-color);
+        }
+        
+        .edit-title-input {
+            border: 1px solid var(--primary-color);
+            border-radius: 5px;
+            padding: 5px 10px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            width: 100%;
+            background: rgba(75, 11, 118, 0.05);
+        }
+        
+        .title-actions {
+            display: flex;
+            gap: 5px;
+            margin-left: auto;
+        }
+        
+        .title-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 3px;
+            transition: background-color 0.3s;
+        }
+        
+        .title-btn:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-save {
+            color: var(--success-color);
+        }
+        
+        .btn-cancel {
+            color: var(--danger-color);
+        }
+        
+        .exam-topic {
+            font-weight: 500;
+            margin-bottom: 15px;
+            text-transform: capitalize;
+        }
+        
+        .exam-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .meta-item {
+            background: #f0f0f0;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .score-high {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+        }
+        
+        .score-medium {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning-color);
+        }
+        
+        .score-low {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+        }
+        
+        .difficulty-badge {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: white;
+        }
+        
+        .difficulty-easy {
+            background: var(--success-color);
+        }
+        
+        .difficulty-medium {
+            background: var(--warning-color);
+        }
+        
+        .difficulty-hard {
+            background: var(--danger-color);
+        }
+        
+        .question-types {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        
+        .type-badge {
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            background: rgba(14, 165, 233, 0.1);
+            color: var(--info-color);
+            border: 1px solid rgba(14, 165, 233, 0.2);
+        }
+        
+        .exam-date {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .exam-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .btn-view {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 5px;
+            font-weight: 500;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .btn-view:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+            color: white;
+            text-decoration: none;
+        }
+        
+        .btn-retake {
+            background: transparent;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            padding: 8px 20px;
+            border-radius: 5px;
+            font-weight: 500;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .btn-retake:hover {
+            background: var(--primary-color);
+            color: white;
+            text-decoration: none;
+        }
+        
+        .btn-delete {
+            background: transparent;
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
+            padding: 8px 20px;
+            border-radius: 5px;
+            font-weight: 500;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .btn-delete:hover {
+            background: var(--danger-color);
+            color: white;
+            text-decoration: none;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-left: auto;
+        }
+        
+        .no-history {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-light);
+        }
+        
+        .no-history i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #ddd;
+        }
+        
+        .back-btn {
+            margin-bottom: 20px;
+        }
+        
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-item {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: var(--text-light);
+            font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            .exam-meta {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .exam-actions {
+                flex-direction: column;
+            }
+            
+            .action-buttons {
+                margin-left: 0;
+                justify-content: flex-start;
+            }
+            
+            .stats-summary {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .title-actions {
+                margin-left: 0;
+                margin-top: 10px;
+                justify-content: flex-start;
+            }
+
+            .filter-options {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="history-container">
+        <div class="back-btn">
+            <a href="{{ url_for('quiz.dashboard') }}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+        
+        <div class="history-header">
+            <h1><i class="fas fa-history"></i> Quiz History</h1>
+            <p>Review your past quiz attempts and track your progress</p>
+        </div>
+
+        {% if attempts and attempts|length > 0 %}
+            <!-- Statistics Summary -->
+            <div class="stats-summary">
+                <div class="stat-item">
+                    <div class="stat-value">{{ attempts|length }}</div>
+                    <div class="stat-label">Total Attempts</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ "%.1f"|format(average_score) }}%</div>
+                    <div class="stat-label">Average Score</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ best_score }}%</div>
+                    <div class="stat-label">Best Score</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ total_questions }}</div>
+                    <div class="stat-label">Questions Answered</div>
+                </div>
+            </div>
+
+            <!-- Search and Filter Section -->
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" id="search-input" placeholder="Search quizzes by title or topic...">
+            </div>
+            
+            <div class="filter-options">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="high">High Scores (80%+)</button>
+                <button class="filter-btn" data-filter="medium">Medium Scores (60-79%)</button>
+                <button class="filter-btn" data-filter="low">Low Scores (<60%)</button>
+                <button class="filter-btn" data-filter="recent">Most Recent</button>
+            </div>
+
+            {% for attempt in attempts %}
+                {% set percentage = (attempt.score / attempt.total_questions) * 100 %}
+                {% set score_class = 'score-high' if percentage >= 80 else 'score-medium' if percentage >= 60 else 'score-low' %}
+                
+                <div class="exam-card" data-attempt-id="{{ attempt.id }}" data-score="{{ percentage }}" data-date="{{ attempt.completed_at }}" data-difficulty="{{ attempt.difficulty or 'medium' }}">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div style="flex: 1;">
+                            <div class="exam-title">
+                                <span class="title-editable" 
+                                      onclick="enableTitleEdit({{ attempt.id }})"
+                                      id="title-display-{{ attempt.id }}">
+                                    {{ attempt.display_title }}
+                                </span>
+                                <div class="title-actions" id="title-actions-{{ attempt.id }}" style="display: none;">
+                                    <button class="title-btn btn-save" onclick="saveTitle({{ attempt.id }})">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    <button class="title-btn btn-cancel" onclick="cancelTitleEdit({{ attempt.id }})">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <input type="text" 
+                                   class="edit-title-input" 
+                                   id="title-input-{{ attempt.id }}" 
+                                   value="{{ attempt.display_title }}"
+                                   style="display: none;"
+                                   onkeypress="handleTitleKeypress(event, {{ attempt.id }})">
+                        </div>
+                        {% if attempt.difficulty %}
+                            <span class="difficulty-badge difficulty-{{ attempt.difficulty }}">
+                                {{ attempt.difficulty|title }}
+                            </span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="exam-topic">
+                        {% if attempt.context %}
+                            {% set context = attempt.context %}
+                            {% set sentences = context.split('.') %}
+                            {% set topic = '' %}
+                            {% for sentence in sentences %}
+                                {% if sentence.strip() and sentence|length > 20 and sentence.split()|length >= 3 and not topic %}
+                                    {% set topic = sentence.strip()[:40] + '...' %}
+                                {% endif %}
+                            {% endfor %}
+                            {{ topic if topic else 'Study Material' }}
+                        {% else %}
+                            Mixed Topics
+                        {% endif %}
+                    </div>
+                    
+                    {% if attempt.question_types and attempt.question_types|length > 0 %}
+                    <div class="question-types">
+                        {% for type in attempt.question_types %}
+                            <span class="type-badge">{{ type }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="exam-meta">
+                        <div class="meta-item">
+                            <i class="fas fa-question-circle"></i>
+                            <strong>Questions:</strong> {{ attempt.total_questions }}
+                        </div>
+                        <div class="meta-item {{ score_class }}">
+                            <i class="fas fa-star"></i>
+                            <strong>Score:</strong> {{ attempt.score }}/{{ attempt.total_questions }} ({{ "%.1f"|format(percentage) }}%)
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-clock"></i>
+                            <strong>Time:</strong> 
+                            {% if attempt.time_spent %}
+                                {% set minutes = attempt.time_spent // 60 %}
+                                {% set seconds = attempt.time_spent % 60 %}
+                                {% if minutes > 0 %}
+                                    {{ minutes }}m {{ seconds }}s
+                                {% else %}
+                                    {{ seconds }}s
+                                {% endif %}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="exam-date">
+                        <i class="far fa-calendar-alt"></i>
+                        <strong>Completed:</strong> 
+                        {{ attempt.formatted_date }}
+                    </div>
+                    
+                    <div class="exam-actions">
+                        <a href="{{ url_for('progress.view_attempt', attempt_id=attempt.id) }}" class="btn-view">
+                            <i class="fas fa-eye"></i> View Details
+                        </a>
+                        <a href="{{ url_for('progress.retake_quiz', attempt_id=attempt.id) }}" class="btn-retake">
+                            <i class="fas fa-redo"></i> Retake Quiz
+                        </a>
+                        <div class="action-buttons">
+                            <button class="btn-delete" onclick="deleteAttempt({{ attempt.id }}, '{{ attempt.display_title }}')">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="exam-card">
+                <div class="no-history">
+                    <i class="fas fa-inbox"></i>
+                    <h3>No Quiz History</h3>
+                    <p>You haven't completed any quizzes yet. Complete a quiz to see your history here!</p>
+                    <a href="{{ url_for('quiz.dashboard') }}" class="btn btn-primary mt-3">
+                        <i class="fas fa-tasks"></i> Take a Quiz
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // Search functionality
+        document.getElementById('search-input').addEventListener('keyup', function() {
+            const searchText = this.value.toLowerCase();
+            const examCards = document.querySelectorAll('.exam-card');
+            
+            examCards.forEach(card => {
+                const title = card.querySelector('.exam-title .title-editable').textContent.toLowerCase();
+                const topic = card.querySelector('.exam-topic').textContent.toLowerCase();
+                
+                if (title.includes(searchText) || topic.includes(searchText)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+        
+        // Filter functionality
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Update active state
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                const filter = this.dataset.filter;
+                const examCards = document.querySelectorAll('.exam-card');
+                
+                examCards.forEach(card => {
+                    const score = parseFloat(card.dataset.score);
+                    const date = new Date(card.dataset.date);
+                    
+                    let shouldShow = false;
+                    
+                    switch(filter) {
+                        case 'all':
+                            shouldShow = true;
+                            break;
+                        case 'high':
+                            shouldShow = score >= 80;
+                            break;
+                        case 'medium':
+                            shouldShow = score >= 60 && score < 80;
+                            break;
+                        case 'low':
+                            shouldShow = score < 60;
+                            break;
+                        case 'recent':
+                            shouldShow = true;
+                            // For recent, we'll sort later
+                            break;
+                        default:
+                            shouldShow = true;
+                    }
+                    
+                    if (shouldShow) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                // If recent filter is selected, sort by date
+                if (filter === 'recent') {
+                    const container = document.querySelector('.history-container');
+                    const cards = Array.from(document.querySelectorAll('.exam-card[style="display: block"]'));
+                    
+                    // Sort by date (newest first)
+                    cards.sort((a, b) => new Date(b.dataset.date) - new Date(a.dataset.date));
+                    
+                    // Reappend in sorted order
+                    cards.forEach(card => {
+                        container.appendChild(card);
+                    });
+                }
+            });
+        });
+
+        // Title editing functionality
+        function enableTitleEdit(attemptId) {
+            const display = document.getElementById(`title-display-${attemptId}`);
+            const input = document.getElementById(`title-input-${attemptId}`);
+            const actions = document.getElementById(`title-actions-${attemptId}`);
+            
+            display.style.display = 'none';
+            input.style.display = 'block';
+            actions.style.display = 'flex';
+            
+            input.focus();
+            input.select();
+        }
+        
+        function cancelTitleEdit(attemptId) {
+            const display = document.getElementById(`title-display-${attemptId}`);
+            const input = document.getElementById(`title-input-${attemptId}`);
+            const actions = document.getElementById(`title-actions-${attemptId}`);
+            
+            display.style.display = 'inline';
+            input.style.display = 'none';
+            actions.style.display = 'none';
+            
+            // Reset input value to original
+            input.value = display.textContent.trim();
+        }
+        
+        function saveTitle(attemptId) {
+            const input = document.getElementById(`title-input-${attemptId}`);
+            const display = document.getElementById(`title-display-${attemptId}`);
+            const actions = document.getElementById(`title-actions-${attemptId}`);
+            const newTitle = input.value.trim();
+            
+            if (!newTitle) {
+                alert('Title cannot be empty');
+                return;
+            }
+            
+            // Send update request
+            fetch(`/edit_attempt_title/${attemptId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ title: newTitle })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update display
+                    display.textContent = newTitle;
+                    display.style.display = 'inline';
+                    input.style.display = 'none';
+                    actions.style.display = 'none';
+                    
+                    // Show success feedback
+                    showNotification('Title updated successfully!', 'success');
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error updating title:', error);
+                alert('Error updating title. Please try again.');
+            });
+        }
+        
+        function handleTitleKeypress(event, attemptId) {
+            if (event.key === 'Enter') {
+                saveTitle(attemptId);
+            } else if (event.key === 'Escape') {
+                cancelTitleEdit(attemptId);
+            }
+        }
+        
+        // Delete attempt functionality
+        function deleteAttempt(attemptId, title) {
+            if (confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) {
+                fetch(`/delete_attempt/${attemptId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Remove the attempt card from the DOM
+                        const attemptCard = document.querySelector(`[data-attempt-id="${attemptId}"]`);
+                        if (attemptCard) {
+                            attemptCard.style.opacity = '0';
+                            attemptCard.style.transform = 'translateX(-100%)';
+                            setTimeout(() => {
+                                attemptCard.remove();
+                                showNotification('Quiz attempt deleted successfully!', 'success');
+                                
+                                // Reload page if no attempts left
+                                if (document.querySelectorAll('.exam-card').length === 1) { // Only no-history card left
+                                    setTimeout(() => location.reload(), 1000);
+                                }
+                            }, 300);
+                        }
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting attempt:', error);
+                    alert('Error deleting attempt. Please try again.');
+                });
+            }
+        }
+        
+        // Notification system
+        function showNotification(message, type) {
+            // Remove existing notifications
+            const existingNotifications = document.querySelectorAll('.custom-notification');
+            existingNotifications.forEach(notif => notif.remove());
+            
+            const notification = document.createElement('div');
+            notification.className = `custom-notification alert alert-${type === 'success' ? 'success' : 'danger'}`;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 10000;
+                min-width: 300px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                border: none;
+                border-radius: 8px;
+            `;
+            notification.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.style.opacity = '0';
+                    notification.style.transform = 'translateX(100%)';
+                    setTimeout(() => notification.remove(), 300);
+                }
+            }, 3000);
+        }
+        
+        // Add animation to cards
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.exam-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>

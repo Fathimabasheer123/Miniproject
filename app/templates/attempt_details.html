@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Attempt Details - QuizGen</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4b0b76;
+            --secondary-color: #6a1b9a;
+            --light-bg: #f4f7fb;
+            --card-bg: #ffffff;
+            --text-color: #334155;
+            --text-light: #64748b;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --info-color: #0ea5e9;
+            --warning-color: #f59e0b;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--light-bg);
+            color: var(--text-color);
+            padding: 20px;
+        }
+        
+        .details-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .details-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .details-header h1 {
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .score-display {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .score-value {
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .score-text {
+            font-size: 18px;
+            color: var(--text-light);
+        }
+        
+        .question-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+            overflow: hidden;
+            padding: 20px;
+            border-left: 4px solid #ddd;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        .question-card.correct {
+            border-left-color: var(--success-color);
+        }
+        
+        .question-card.incorrect {
+            border-left-color: var(--danger-color);
+        }
+        
+        .question-number {
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .question-type-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            background: var(--info-color);
+            color: white;
+        }
+        
+        .question-type-badge.mcq {
+            background: var(--primary-color);
+        }
+        
+        .question-type-badge.true-false {
+            background: var(--warning-color);
+        }
+        
+        .question-type-badge.fill-blank {
+            background: var(--success-color);
+        }
+        
+        .question-text {
+            font-weight: 500;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+        
+        .options-list {
+            margin-bottom: 15px;
+        }
+        
+        .option-item {
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: #f9f9f9;
+            transition: all 0.3s ease;
+        }
+        
+        .option-item.correct {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: var(--success-color);
+            color: var(--success-color);
+            font-weight: 500;
+        }
+        
+        .option-item.incorrect {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: var(--danger-color);
+            color: var(--danger-color);
+            font-weight: 500;
+        }
+        
+        .option-item.selected {
+            background: rgba(75, 11, 118, 0.1);
+            border-color: var(--primary-color);
+        }
+        
+        .answer-feedback {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-weight: 500;
+        }
+        
+        .feedback-correct {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+            border-left: 4px solid var(--success-color);
+        }
+        
+        .feedback-incorrect {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+            border-left: 4px solid var(--danger-color);
+        }
+        
+        .explanation-section {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(14, 165, 233, 0.1);
+            border-radius: 8px;
+            border-left: 4px solid var(--info-color);
+        }
+        
+        .explanation-title {
+            font-weight: 600;
+            color: var(--info-color);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .back-btn {
+            margin-bottom: 20px;
+        }
+        
+        .summary-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+            overflow: hidden;
+            padding: 25px;
+        }
+        
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .summary-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .difficulty-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            color: white;
+        }
+        
+        .difficulty-easy {
+            background: var(--success-color);
+        }
+        
+        .difficulty-medium {
+            background: var(--warning-color);
+        }
+        
+        .difficulty-hard {
+            background: var(--danger-color);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: var(--text-light);
+            font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            .score-value {
+                font-size: 36px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .question-number {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="details-container">
+        <div class="back-btn">
+            <a href="{{ url_for('progress.history') }}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left"></i> Back to History
+            </a>
+        </div>
+        
+        <div class="details-header">
+            <h1><i class="fas fa-info-circle"></i> Quiz Attempt Details</h1>
+            <p>Review your performance and learn from explanations</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">{{ attempt.score }}/{{ attempt.total_questions }}</div>
+                <div class="stat-label">Score</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ "%.1f"|format(score_percentage) }}%</div>
+                <div class="stat-label">Percentage</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ correct_count }}</div>
+                <div class="stat-label">Correct Answers</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ incorrect_count }}</div>
+                <div class="stat-label">Incorrect Answers</div>
+            </div>
+        </div>
+
+        <div class="summary-card">
+            <h3 class="mb-4"><i class="fas fa-list-alt"></i> Quiz Summary</h3>
+            
+            <div class="summary-item">
+                <strong>Quiz Title:</strong>
+                <span>
+                    {% if attempt.title and attempt.title != 'Generated Quiz' %}
+                        {{ attempt.title }}
+                    {% elif attempt.context %}
+                        {# Extract meaningful title from context #}
+                        {% set context = attempt.context %}
+                        {% set sentences = context.split('.') %}
+                        {% set meaningful_title = '' %}
+                        {% for sentence in sentences %}
+                            {% if sentence.strip() and sentence|length > 20 and sentence.split()|length >= 3 and not meaningful_title %}
+                                {% set meaningful_title = sentence.strip()[:50] + '...' %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ meaningful_title if meaningful_title else 'Study Material Quiz' }}
+                    {% else %}
+                        Generated Quiz
+                    {% endif %}
+                </span>
+            </div>
+            
+            <div class="summary-item">
+                <strong>Date Completed:</strong>
+                <span>
+                    {% if attempt.completed_at %}
+                        {% if 'T' in attempt.completed_at %}
+                            {# ISO format date #}
+                            {{ attempt.completed_at.split('T')[0]|replace('-', '/') }} at {{ attempt.completed_at.split('T')[1][:5] }}
+                        {% else %}
+                            {# SQLite datetime format #}
+                            {{ attempt.completed_at[:16]|replace(' ', ' at ') }}
+                        {% endif %}
+                    {% else %}
+                        <span class="text-muted">Unknown date</span>
+                    {% endif %}
+                </span>
+            </div>
+            
+            <div class="summary-item">
+                <strong>Difficulty Level:</strong>
+                <span>
+                    {% if attempt.difficulty %}
+                        <span class="difficulty-badge difficulty-{{ attempt.difficulty }}">
+                            {{ attempt.difficulty|title }}
+                        </span>
+                    {% else %}
+                        <span class="text-muted">Not specified</span>
+                    {% endif %}
+                </span>
+            </div>
+            
+            <div class="summary-item">
+                <strong>Time Spent:</strong>
+                <span>
+                    {% if attempt.time_spent and attempt.time_spent > 0 %}
+                        {% set minutes = (attempt.time_spent // 60) %}
+                        {% set seconds = (attempt.time_spent % 60) %}
+                        {% if minutes > 0 %}
+                            {{ minutes }}m {{ seconds }}s
+                        {% else %}
+                            {{ seconds }} seconds
+                        {% endif %}
+                    {% else %}
+                        <span class="text-muted">Not recorded</span>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+
+        <h3 class="mb-4"><i class="fas fa-question-circle"></i> Question Review</h3>
+        
+        {% for question in questions %}
+            <div class="question-card {% if question.is_correct %}correct{% else %}incorrect{% endif %}" 
+                 style="opacity: 1; transform: translateY(0);">
+                <div class="question-number">
+                    <span>Question {{ loop.index }}</span>
+                    {% if question.question_type %}
+                        <span class="question-type-badge {{ question.question_type|replace(' ', '-')|lower }}">
+                            {{ question.question_type }}
+                        </span>
+                    {% endif %}
+                </div>
+                
+                <div class="question-text">{{ question.question_text }}</div>
+                
+                {% if question.options and question.options|length > 0 %}
+                    <div class="options-list">
+                        {% for option in question.options %}
+                            <div class="option-item 
+                                {% if option == question.correct_answer %}correct{% endif %}
+                                {% if option == question.user_answer and not question.is_correct %}incorrect{% endif %}
+                                {% if option == question.user_answer %}selected{% endif %}">
+                                {{ option }}
+                                {% if option == question.correct_answer %}
+                                    <i class="fas fa-check-circle float-end text-success"></i>
+                                {% elif option == question.user_answer and not question.is_correct %}
+                                    <i class="fas fa-times-circle float-end text-danger"></i>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {# For fill-in-the-blank or statement questions #}
+                    <div class="options-list">
+                        <div class="option-item {% if question.is_correct %}correct{% else %}incorrect{% endif %}">
+                            <strong>Your Answer:</strong> {{ question.user_answer or "Not answered" }}
+                        </div>
+                        <div class="option-item correct">
+                            <strong>Correct Answer:</strong> {{ question.correct_answer }}
+                        </div>
+                    </div>
+                {% endif %}
+                
+                <div class="answer-feedback {% if question.is_correct %}feedback-correct{% else %}feedback-incorrect{% endif %}">
+                    {% if question.is_correct %}
+                        <i class="fas fa-check-circle"></i> 
+                        <strong>Correct!</strong> Your answer was right.
+                    {% else %}
+                        <i class="fas fa-times-circle"></i> 
+                        <strong>Incorrect.</strong> 
+                        Your answer: <strong>{{ question.user_answer or "Not answered" }}</strong> | 
+                        Correct answer: <strong>{{ question.correct_answer }}</strong>
+                    {% endif %}
+                </div>
+                
+                {% if question.explanation %}
+                    <div class="explanation-section">
+                        <div class="explanation-title">
+                            <i class="fas fa-lightbulb"></i> Explanation
+                        </div>
+                        <div class="explanation-content">
+                            {{ question.explanation }}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        // Enhanced animation for question cards
+        document.addEventListener('DOMContentLoaded', function() {
+            const questionCards = document.querySelectorAll('.question-card');
+            
+            questionCards.forEach((card, index) => {
+                // Reset for animation
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+
+            // Add click animation to option items
+            const optionItems = document.querySelectorAll('.option-item');
+            optionItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    this.style.transform = 'scale(0.98)';
+                    setTimeout(() => {
+                        this.style.transform = 'scale(1)';
+                    }, 150);
+                });
+            });
+        });
+
+        // Print functionality
+        function printAttemptDetails() {
+            window.print();
+        }
+    </script>
+</body>  
+</html>

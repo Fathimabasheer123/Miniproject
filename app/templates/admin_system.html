@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Health - QuizGen Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .admin-sidebar { background: linear-gradient(135deg, #2c3e50, #34495e); color: white; min-height: 100vh; padding: 0; }
+        .admin-sidebar .nav-link { color: #ecf0f1; padding: 15px 20px; border-left: 4px solid transparent; }
+        .admin-sidebar .nav-link:hover, .admin-sidebar .nav-link.active { background: rgba(255,255,255,0.1); border-left-color: #3498db; }
+        .health-indicator { width: 15px; height: 15px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+        .health-good { background-color: #28a745; }
+        .health-warning { background-color: #ffc107; }
+        .health-critical { background-color: #dc3545; }
+        .progress { height: 25px; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 admin-sidebar">
+                <div class="p-3">
+                    <h4><i class="fas fa-shield-alt"></i> QuizGen Admin</h4>
+                    <hr class="bg-light">
+                </div>
+                <ul class="nav flex-column">
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.admin_dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.manage_users') }}"><i class="fas fa-users"></i> User Management</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.manage_quizzes') }}"><i class="fas fa-file-alt"></i> Quiz Management</a></li>
+                   <!-- <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.analytics') }}"><i class="fas fa-chart-bar"></i> Analytics</a></li>-->
+                    <li class="nav-item"><a class="nav-link active" href="{{ url_for('admin.system_health') }}"><i class="fas fa-heartbeat"></i> System </a></li>
+                    <!-- <li class="nav-item mt-4"><a class="nav-link" href="{{ url_for('quiz.dashboard') }}"><i class="fas fa-arrow-left"></i> Back to App</a></li> -->
+                </ul>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 ml-sm-auto p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2><i class="fas fa-heartbeat"></i> System Health</h2>
+                    <div class="text-muted">
+                        <i class="fas fa-user-shield"></i> {{ user }}
+                    </div>
+                </div>
+
+                <!-- System Status -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card border-success">
+                            <div class="card-body text-center">
+                                <i class="fas fa-database fa-3x text-success mb-3"></i>
+                                <h5>Database</h5>
+                                <span class="health-indicator health-good"></span>
+                                <span class="text-success">Operational</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-success">
+                            <div class="card-body text-center">
+                                <i class="fas fa-robot fa-3x text-success mb-3"></i>
+                                <h5>AI Service</h5>
+                                <span class="health-indicator health-good"></span>
+                                <span class="text-success">Connected</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-success">
+                            <div class="card-body text-center">
+                                <i class="fas fa-server fa-3x text-success mb-3"></i>
+                                <h5>Web Server</h5>
+                                <span class="health-indicator health-good"></span>
+                                <span class="text-success">Running</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-success">
+                            <div class="card-body text-center">
+                                <i class="fas fa-shield-alt fa-3x text-success mb-3"></i>
+                                <h5>Security</h5>
+                                <span class="health-indicator health-good"></span>
+                                <span class="text-success">Protected</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Database Statistics -->
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="card shadow">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0"><i class="fas fa-database"></i> Database Statistics</h5>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Total Users</strong></td>
+                                        <td>{{ db_stats.user_count }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Total Quizzes</strong></td>
+                                        <td>{{ db_stats.quiz_count }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Total Questions</strong></td>
+                                        <td>{{ db_stats.question_count }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Quiz Attempts</strong></td>
+                                        <td>{{ db_stats.attempt_count }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Latest User</strong></td>
+                                        <td>{{ db_stats.latest_user[:10] if db_stats.latest_user else 'N/A' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Latest Quiz</strong></td>
+                                        <td>{{ db_stats.latest_quiz[:10] if db_stats.latest_quiz else 'N/A' }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- <div class="col-md-6">
+                        <div class="card shadow">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0"><i class="fas fa-hdd"></i> Storage Usage</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <strong>Users Data:</strong>
+                                    <div class="progress">
+                                        <div class="progress-bar" style="width: {{ (storage_estimate.users / storage_estimate.total * 100)|round }}%">
+                                            {{ "%.1f"|format(storage_estimate.users) }} KB
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Quizzes Data:</strong>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" style="width: {{ (storage_estimate.quizzes / storage_estimate.total * 100)|round }}%">
+                                            {{ "%.1f"|format(storage_estimate.quizzes) }} KB
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Questions Data:</strong>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-info" style="width: {{ (storage_estimate.questions / storage_estimate.total * 100)|round }}%">
+                                            {{ "%.1f"|format(storage_estimate.questions) }} KB
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Attempts Data:</strong>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-warning" style="width: {{ (storage_estimate.attempts / storage_estimate.total * 100)|round }}%">
+                                            {{ "%.1f"|format(storage_estimate.attempts) }} KB
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-center mt-3">
+                                    <h4>Total: {{ "%.1f"|format(storage_estimate.total) }} KB</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div> -->
+                </div>
+
+                <!-- Performance Metrics -->
+                <!-- <div class="row">
+                    <div class="col-12">
+                        <div class="card shadow">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0"><i class="fas fa-tachometer-alt"></i> Performance Metrics</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row text-center">
+                                    <div class="col-md-4">
+                                        <div class="border rounded p-3">
+                                            <i class="fas fa-file-text fa-2x text-primary mb-2"></i>
+                                            <h5>Average Context Size</h5>
+                                            <h3 class="text-primary">{{ "%.0f"|format(performance_metrics.avg_context_size or 0) }}</h3>
+                                            <small class="text-muted">characters per quiz</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="border rounded p-3">
+                                            <i class="fas fa-question-circle fa-2x text-success mb-2"></i>
+                                            <h5>Question Types</h5>
+                                            <h3 class="text-success">{{ "%.1f"|format(performance_metrics.avg_question_types or 0) }}</h3>
+                                            <small class="text-muted">types per quiz</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="border rounded p-3">
+                                            <i class="fas fa-layer-group fa-2x text-info mb-2"></i>
+                                            <h5>Difficulty Levels</h5>
+                                            <h3 class="text-info">{{ performance_metrics.difficulty_levels_used }}</h3>
+                                            <small class="text-muted">in use</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div> -->
+            </div>
+        </div>
+    </div>
+</body>
+</html>

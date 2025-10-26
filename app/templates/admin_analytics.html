@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics - QuizGen Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .system-sidebar { background: linear-gradient(135deg, #2c3e50, #34495e); color: white; min-height: 100vh; padding: 0; }
+        .system-sidebar .nav-link { color: #ecf0f1; padding: 15px 20px; border-left: 4px solid transparent; }
+        .system-sidebar .nav-link:hover, .system-sidebar .nav-link.active { background: rgba(255,255,255,0.1); border-left-color: #3498db; }
+        .chart-container { position: relative; height: 300px; width: 100%; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 system-sidebar">
+                <div class="p-3">
+                    <h4><i class="fas fa-cogs"></i> QuizGen System</h4>
+                    <hr class="bg-light">
+                </div>
+                <ul class="nav flex-column">
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.admin_dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.manage_users') }}"><i class="fas fa-users"></i> User Management</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.manage_quizzes') }}"><i class="fas fa-file-alt"></i> Quiz Management</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="{{ url_for('admin.analytics') }}"><i class="fas fa-chart-bar"></i> Analytics</a></li>
+                    <li class="nav-item mt-4"><a class="nav-link text-warning" href="{{ url_for('admin.exit_admin') }}"><i class="fas fa-sign-out-alt"></i> Exit Admin</a></li>
+                </ul>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 ml-sm-auto p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2><i class="fas fa-chart-bar"></i> Analytics Dashboard</h2>
+                    <div class="text-muted">
+                        <i class="fas fa-user-shield"></i> System Controller
+                    </div>
+                </div>
+
+                <!-- Performance Analytics -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card shadow">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0"><i class="fas fa-chart-line"></i> Performance by Difficulty</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="performanceChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card shadow">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0"><i class="fas fa-users"></i> User Engagement</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="engagementChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Daily Activity -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card shadow">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0"><i class="fas fa-calendar"></i> Daily Activity (Last 30 Days)</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="dailyActivityChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Usage Patterns -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card shadow">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0"><i class="fas fa-robot"></i> AI Usage Patterns</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="aiUsageChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Performance by Difficulty Chart
+        const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+        const performanceChart = new Chart(performanceCtx, {
+            type: 'bar',
+            data: {
+                labels: [{% for stat in performance_stats %}'{{ stat.difficulty|title }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+                datasets: [{
+                    label: 'Average Score (%)',
+                    data: [{% for stat in performance_stats %}{{ "%.1f"|format(stat.avg_score or 0) }}{% if not loop.last %}, {% endif %}{% endfor %}],
+                    backgroundColor: ['#4bc0c0', '#ffcd56', '#ff6384'],
+                    borderColor: ['#4bc0c0', '#ffcd56', '#ff6384'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+
+        // User Engagement Chart
+        const engagementCtx = document.getElementById('engagementChart').getContext('2d');
+        const engagementChart = new Chart(engagementCtx, {
+            type: 'doughnut',
+            data: {
+                labels: [{% for stat in engagement_stats %}'{{ stat.user_type }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+                datasets: [{
+                    data: [{% for stat in engagement_stats %}{{ stat.user_count }}{% if not loop.last %}, {% endif %}{% endfor %}],
+                    backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        // Daily Activity Chart
+        const dailyCtx = document.getElementById('dailyActivityChart').getContext('2d');
+        const dailyChart = new Chart(dailyCtx, {
+            type: 'line',
+            data: {
+                labels: [{% for activity in daily_activity %}'{{ activity.date[5:] }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+                datasets: [{
+                    label: 'Quiz Attempts',
+                    data: [{% for activity in daily_activity %}{{ activity.attempts }}{% if not loop.last %}, {% endif %}{% endfor %}],
+                    borderColor: '#36a2eb',
+                    backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                    tension: 0.4
+                }, {
+                    label: 'Active Users',
+                    data: [{% for activity in daily_activity %}{{ activity.active_users }}{% if not loop.last %}, {% endif %}{% endfor %}],
+                    borderColor: '#ff6384',
+                    backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        // AI Usage Patterns
+        const aiCtx = document.getElementById('aiUsageChart').getContext('2d');
+        const aiChart = new Chart(aiCtx, {
+            type: 'bar',
+            data: {
+                labels: [{% for pattern in ai_patterns %}'{{ pattern.hour }}:00'{% if not loop.last %}, {% endif %}{% endfor %}],
+                datasets: [{
+                    label: 'Quizzes Generated',
+                    data: [{% for pattern in ai_patterns %}{{ pattern.quiz_count }}{% if not loop.last %}, {% endif %}{% endfor %}],
+                    backgroundColor: 'rgba(75, 11, 118, 0.8)',
+                    borderColor: 'rgba(75, 11, 118, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

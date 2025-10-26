@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Take Quiz - QuizGen</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #4b0b76;
+      --secondary-color: #6a1b9a;
+      --success-color: #28a745;
+      --danger-color: #dc3545;
+      --warning-color: #ffc107;
+      --info-color: #17a2b8;
+    }
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #333;
+    }
+    
+    .quiz-container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    
+    .quiz-header {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 25px;
+      text-align: center;
+    }
+    
+    .quiz-header h1 {
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    
+    .quiz-header p {
+      opacity: 0.9;
+      margin: 0;
+    }
+    
+    .progress-container {
+      padding: 20px;
+      background: white;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .timer-container {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: white;
+      padding: 8px 15px;
+      border-radius: 20px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      font-weight: 500;
+    }
+    
+    .quiz-card {
+      padding: 0;
+      border: none;
+      border-radius: 0;
+    }
+    
+    .quiz-card-header {
+      background: #f8f9fa;
+      padding: 15px 20px;
+      border-bottom: 1px solid #eee;
+      font-weight: 600;
+      color: var(--primary-color);
+    }
+    
+    .quiz-card-body {
+      padding: 25px;
+    }
+    
+    .question-text {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 20px;
+    }
+    
+    .options-container {
+      margin-bottom: 25px;
+    }
+    
+    .option-item {
+      padding: 12px 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .option-item:hover {
+      background: #f8f9fa;
+      border-color: #ccc;
+    }
+    
+    .option-item.selected {
+      background: rgba(75, 11, 118, 0.1);
+      border-color: var(--primary-color);
+    }
+    
+    .option-input {
+      margin-right: 10px;
+    }
+    
+    .navigation-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: space-between;
+    }
+    
+    .quiz-btn {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-weight: 500;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .quiz-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(75, 11, 118, 0.3);
+      color: white;
+    }
+    
+    .quiz-btn-outline {
+      background: transparent;
+      border: 2px solid var(--primary-color);
+      color: var(--primary-color);
+    }
+    
+    .quiz-btn-outline:hover {
+      background: var(--primary-color);
+      color: white;
+    }
+    
+    .results-container {
+      text-align: center;
+    }
+    
+    .score-display {
+      font-size: 48px;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: 10px;
+    }
+    
+    .score-text {
+      font-size: 18px;
+      margin-bottom: 30px;
+      color: #555;
+    }
+    
+    .results-buttons {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 30px;
+    }
+    
+    .review-container {
+      text-align: left;
+      margin-top: 30px;
+      padding-top: 30px;
+      border-top: 1px solid #eee;
+    }
+    
+    .review-item {
+      background: #f9f9f9;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-left: 4px solid #ddd;
+    }
+    
+    .review-item.correct {
+      border-left-color: var(--success-color);
+    }
+    
+    .review-item.incorrect {
+      border-left-color: var(--danger-color);
+    }
+    
+    .review-question {
+      font-weight: 500;
+      margin-bottom: 15px;
+      font-size: 16px;
+    }
+    
+    .review-answer {
+      padding: 5px 10px;
+      border-radius: 5px;
+      margin: 0 5px;
+    }
+    
+    .review-correct {
+      background: rgba(40, 167, 69, 0.1);
+      color: var(--success-color);
+      font-weight: 500;
+    }
+    
+    .review-incorrect {
+      background: rgba(220, 53, 69, 0.1);
+      color: var(--danger-color);
+      font-weight: 500;
+    }
+    
+    .review-explanation {
+      background: rgba(23, 162, 184, 0.1);
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 10px;
+      border-left: 3px solid var(--info-color);
+    }
+    
+    .question-type-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      margin-left: 10px;
+      background: var(--info-color);
+      color: white;
+    }
+    
+    .error-card {
+      text-align: center;
+      padding: 40px;
+    }
+    
+    .d-none {
+      display: none;
+    }
+    
+    @media (max-width: 576px) {
+      .navigation-buttons {
+        flex-direction: column;
+      }
+      
+      .results-buttons {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .quiz-btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-container">
+    <div class="quiz-header">
+      <h1><i class="fas fa-tasks"></i> QuizGen Interactive Quiz</h1>
+      <p>Test your knowledge with this interactive quiz</p>
+      <p><strong>Quiz:</strong> {{ quiz_title }}</p>
+    </div>
+
+    <div class="progress-container">
+      <div class="progress">
+        <div class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+      </div>
+      <div class="text-end mt-1">
+        <span id="progress-text">Question 0 of 0</span>
+      </div>
+    </div>
+
+    <div class="timer-container" id="timer">
+      <i class="fas fa-clock"></i> Time: 00:00
+    </div>
+
+    <div class="quiz-card d-none" id="quiz-card">
+      <div class="quiz-card-header">
+        <div class="question-number" id="question-number">Question 1</div>
+      </div>
+      <div class="quiz-card-body">
+        <div class="question-text" id="question-text"></div>
+        
+        <div class="options-container" id="options-container">
+          <!-- Options will be inserted here by JavaScript -->
+        </div>
+        
+        <div class="navigation-buttons">
+          <button class="quiz-btn quiz-btn-outline" id="prev-btn" disabled>
+            <i class="fas fa-arrow-left"></i> Previous
+          </button>
+          <button class="quiz-btn" id="next-btn">
+            Next <i class="fas fa-arrow-right"></i>
+          </button>
+          <button class="quiz-btn" id="submit-btn" style="display: none;">
+            <i class="fas fa-paper-plane"></i> Submit Quiz
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-card d-none" id="results-card">
+      <div class="quiz-card-header">
+        Quiz Results - {{ quiz_title }}
+      </div>
+      <div class="quiz-card-body">
+        <div class="results-container">
+          <div class="score-display" id="score-display">0/0</div>
+          <div class="score-text" id="score-text"></div>
+          
+          <div class="results-buttons">
+            <button class="quiz-btn" id="restart-btn">
+              <i class="fas fa-redo"></i> Try Again
+            </button>
+            <button class="quiz-btn quiz-btn-outline" id="review-btn">
+              <i class="fas fa-list"></i> Review Answers
+            </button>
+            <a href="{{ url_for('quiz.dashboard') }}" class="quiz-btn quiz-btn-outline">
+              <i class="fas fa-home"></i> Dashboard
+            </a>
+          </div>
+          
+          <!-- PDF Download Section -->
+          <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-download"></i> Download Quiz
+                    </div>
+                    <div class="card-body">
+                        <form id="downloadForm" action="{{ url_for('quiz.download_pdf') }}" method="POST">
+                            <input type="hidden" name="topic" id="downloadTopic" value="{{ quiz_title }}">
+                            <input type="hidden" name="questions" id="downloadQuestions">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-file-pdf"></i> Download as PDF
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+          </div>
+          
+          <div class="review-container d-none" id="review-container">
+            <h4 class="mb-4"><i class="fas fa-check-double"></i> Answer Review</h4>
+            <!-- Review content will be inserted here by JavaScript -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-card d-none" id="error-card">
+      <div class="quiz-card-header">
+        <i class="fas fa-exclamation-triangle"></i> Error
+      </div>
+      <div class="quiz-card-body error-card">
+        <p>No quiz data available. Please generate a quiz first.</p>
+        <a href="{{ url_for('quiz.dashboard') }}" class="quiz-btn">
+          <i class="fas fa-home"></i> Back to Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Quiz data structure
+    let quizData = {
+      title: "{{ quiz_title }}",
+      questions: [],
+      userAnswers: [],
+      startTime: null,
+      timeSpent: 0
+    };
+
+    // DOM elements
+    const quizCard = document.getElementById('quiz-card');
+    const resultsCard = document.getElementById('results-card');
+    const errorCard = document.getElementById('error-card');
+    const questionNumber = document.getElementById('question-number');
+    const questionText = document.getElementById('question-text');
+    const optionsContainer = document.getElementById('options-container');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const submitBtn = document.getElementById('submit-btn');
+    const progressBar = document.querySelector('.progress-bar');
+    const progressText = document.getElementById('progress-text');
+    const scoreDisplay = document.getElementById('score-display');
+    const scoreText = document.getElementById('score-text');
+    const restartBtn = document.getElementById('restart-btn');
+    const reviewBtn = document.getElementById('review-btn');
+    const reviewContainer = document.getElementById('review-container');
+    const timer = document.getElementById('timer');
+    const downloadForm = document.getElementById('downloadForm');
+    const downloadQuestions = document.getElementById('downloadQuestions');
+    const downloadTopic = document.getElementById('downloadTopic');
+
+    // Current question index
+    let currentQuestionIndex = 0;
+
+    // Timer interval
+    let timerInterval = null;
+
+    // Start the quiz
+    function startQuiz(questions) {
+      if (!questions || questions.length === 0) {
+        showError();
+        return;
+      }
+      
+      quizData.questions = questions;
+      quizData.userAnswers = new Array(questions.length).fill(null);
+      quizData.startTime = new Date();
+      
+      // Start timer
+      startTimer();
+      
+      // Show first question
+      showQuestion(0);
+      quizCard.classList.remove('d-none');
+      
+      // Update progress
+      updateProgress();
+    }
+
+    // Show error message
+    function showError() {
+      quizCard.classList.add('d-none');
+      resultsCard.classList.add('d-none');
+      errorCard.classList.remove('d-none');
+    }
+
+    // Start the timer
+    function startTimer() {
+      clearInterval(timerInterval);
+      quizData.timeSpent = 0;
+      
+      timerInterval = setInterval(() => {
+        quizData.timeSpent++;
+        const minutes = Math.floor(quizData.timeSpent / 60);
+        const seconds = quizData.timeSpent % 60;
+        timer.textContent = `⏱️ Time: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      }, 1000);
+    }
+
+    // Stop the timer
+    function stopTimer() {
+      clearInterval(timerInterval);
+    }
+
+    // Show a specific question
+    function showQuestion(index) {
+      currentQuestionIndex = index;
+      const question = quizData.questions[index];
+      
+      // Update question number and text
+      questionNumber.textContent = `Question ${index + 1} of ${quizData.questions.length}`;
+      questionText.innerHTML = question.question;
+      
+      // Clear options container
+      optionsContainer.innerHTML = '';
+      
+      // Add options
+      question.options.forEach((option, optionIndex) => {
+        const optionItem = document.createElement('div');
+        optionItem.className = 'option-item';
+        
+        // Get the stored answer as letter and compare
+        const storedAnswer = quizData.userAnswers[index];
+        const currentOptionLetter = ['A', 'B', 'C', 'D'][optionIndex];
+        
+        if (storedAnswer === currentOptionLetter) {
+          optionItem.classList.add('selected');
+        }
+        
+        optionItem.innerHTML = `
+          <input type="radio" class="option-input" name="answer" id="option-${optionIndex}" 
+            value="${currentOptionLetter}" ${storedAnswer === currentOptionLetter ? 'checked' : ''}>
+          <label class="option-label" for="option-${optionIndex}">${option}</label>
+        `;
+        
+        optionItem.addEventListener('click', () => {
+          document.querySelectorAll('.option-item').forEach(item => {
+            item.classList.remove('selected');
+          });
+          optionItem.classList.add('selected');
+          document.getElementById(`option-${optionIndex}`).checked = true;
+          quizData.userAnswers[index] = currentOptionLetter; // Store as letter
+          updateNavigationButtons();
+        });
+        
+        optionsContainer.appendChild(optionItem);
+      });
+      
+      // Update navigation buttons
+      updateNavigationButtons();
+      
+      // Update progress
+      updateProgress();
+    }
+
+    // Update navigation buttons state
+    function updateNavigationButtons() {
+      prevBtn.disabled = currentQuestionIndex === 0;
+      
+      if (currentQuestionIndex === quizData.questions.length - 1) {
+        nextBtn.style.display = 'none';
+        submitBtn.style.display = 'block';
+      } else {
+        nextBtn.style.display = 'block';
+        submitBtn.style.display = 'none';
+      }
+    }
+
+    // Update progress bar
+    function updateProgress() {
+      const progress = ((currentQuestionIndex + 1) / quizData.questions.length) * 100;
+      progressBar.style.width = `${progress}%`;
+      progressBar.setAttribute('aria-valuenow', progress);
+      progressText.textContent = `Question ${currentQuestionIndex + 1} of ${quizData.questions.length}`;
+    }
+
+    // Navigate to next question
+    function nextQuestion() {
+      if (currentQuestionIndex < quizData.questions.length - 1) {
+        showQuestion(currentQuestionIndex + 1);
+      }
+    }
+
+    // Navigate to previous question
+    function prevQuestion() {
+      if (currentQuestionIndex > 0) {
+        showQuestion(currentQuestionIndex - 1);
+      }
+    }
+
+    // Submit the quiz
+    // Submit the quiz
+function submitQuiz() {
+  stopTimer();
+  
+  // Calculate score with proper TrueFalse handling
+  let score = 0;
+  quizData.questions.forEach((question, index) => {
+    const userAnswer = quizData.userAnswers[index];
+    const correctAnswer = question.answer;
+    
+    let normalizedUserAnswer = userAnswer || '';
+    let normalizedCorrectAnswer = correctAnswer || '';
+    
+    // Handle TrueFalse question comparison
+    if (question.type === 'TrueFalse') {
+      if (userAnswer === 'A') normalizedUserAnswer = 'True';
+      else if (userAnswer === 'B') normalizedUserAnswer = 'False';
+      
+      if (correctAnswer === 'A') normalizedCorrectAnswer = 'True';
+      else if (correctAnswer === 'B') normalizedCorrectAnswer = 'False';
+    } else {
+      normalizedUserAnswer = String(userAnswer || '').trim().toUpperCase();
+      normalizedCorrectAnswer = String(correctAnswer || '').trim().toUpperCase();
+    }
+    
+    if (normalizedUserAnswer === normalizedCorrectAnswer) {
+      score++;
+    }
+  });
+      
+      // Display results
+      scoreDisplay.textContent = `${score}/${quizData.questions.length}`;
+      
+      const percentage = (score / quizData.questions.length) * 100;
+      if (percentage >= 80) {
+        scoreText.textContent = 'Excellent job! You have mastered this material.';
+      } else if (percentage >= 60) {
+        scoreText.textContent = 'Good effort! With a bit more study, you will excel.';
+      } else {
+        scoreText.textContent = 'Keep studying! Review the material and try again.';
+      }
+
+      // Set PDF download data
+      downloadQuestions.value = JSON.stringify(quizData.questions);
+      downloadTopic.value = quizData.title;
+      
+      // Hide quiz card, show results card
+      quizCard.classList.add('d-none');
+      resultsCard.classList.remove('d-none');
+      
+      // Send results to server
+      saveQuizResults(score, quizData.questions.length);
+    }
+
+    // Save quiz results to server
+    function saveQuizResults(score, total) {
+      fetch("{{ url_for('quiz.save_attempt') }}", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          score: score,
+          total: total,
+          answers: quizData.userAnswers,
+          time_spent: quizData.timeSpent 
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (!data.success) {
+          console.error("Failed to save quiz results");
+        }
+      })
+      .catch(error => {
+        console.error("Error saving quiz results:", error);
+      });
+    }
+
+    
+       
+       // Fix answer comparison in showReview function
+function showReview() {
+  reviewContainer.innerHTML = '';
+  reviewContainer.classList.remove('d-none');
+  
+  quizData.questions.forEach((question, index) => {
+    const reviewItem = document.createElement('div');
+    
+    // Get user's answer and correct answer
+    const userAnswer = quizData.userAnswers[index];
+    const correctAnswer = question.answer;
+    
+    // Special handling for TrueFalse questions
+    let normalizedUserAnswer = userAnswer || '';
+    let normalizedCorrectAnswer = correctAnswer || '';
+    
+    if (question.type === 'TrueFalse') {
+      // Convert letters to text for TrueFalse questions
+      if (userAnswer === 'A') normalizedUserAnswer = 'True';
+      else if (userAnswer === 'B') normalizedUserAnswer = 'False';
+      
+      if (correctAnswer === 'A') normalizedCorrectAnswer = 'True';
+      else if (correctAnswer === 'B') normalizedCorrectAnswer = 'False';
+    } else {
+      // For other question types, use letter format
+      normalizedUserAnswer = String(userAnswer || '').trim().toUpperCase();
+      normalizedCorrectAnswer = String(correctAnswer || '').trim().toUpperCase();
+    }
+    
+    const isCorrect = normalizedUserAnswer === normalizedCorrectAnswer;
+    
+    reviewItem.className = `review-item ${isCorrect ? 'correct' : 'incorrect'}`;
+    
+    let explanationHtml = '';
+    if (question.explanation) {
+      explanationHtml = `
+        <div class="review-explanation">
+          <strong><i class="fas fa-lightbulb"></i> Explanation:</strong> ${question.explanation}
+        </div>
+      `;
+    }
+    
+    // Format user answer display
+    let userAnswerDisplay = normalizedUserAnswer || 'Not answered';
+    if (question.type !== 'TrueFalse' && userAnswer && question.options && question.options.length > 0) {
+      // For non-TrueFalse questions, try to find the full option text
+      const optionIndex = ['A', 'B', 'C', 'D'].indexOf(userAnswer.toUpperCase());
+      if (optionIndex !== -1 && optionIndex < question.options.length) {
+        userAnswerDisplay = question.options[optionIndex];
+      }
+    }
+    
+    // Format correct answer display  
+    let correctAnswerDisplay = normalizedCorrectAnswer;
+    if (question.type !== 'TrueFalse' && correctAnswer && question.options && question.options.length > 0) {
+      const optionIndex = ['A', 'B', 'C', 'D'].indexOf(correctAnswer.toUpperCase());
+      if (optionIndex !== -1 && optionIndex < question.options.length) {
+        correctAnswerDisplay = question.options[optionIndex];
+      }
+    }
+    
+    reviewItem.innerHTML = `
+      <div class="review-question">
+        ${index + 1}. ${question.question}
+        ${question.type ? `<span class="question-type-badge">${question.type}</span>` : ''}
+      </div>
+      <div class="mt-2">
+        <strong>Your answer:</strong> 
+        <span class="review-answer ${isCorrect ? 'review-correct' : 'review-incorrect'}">
+          ${userAnswerDisplay}
+        </span>
+      </div>
+      <div class="mt-1">
+        <strong>Correct answer:</strong> 
+        <span class="review-answer review-correct">${correctAnswerDisplay}</span>
+      </div>
+      ${explanationHtml}
+    `;
+    
+    reviewContainer.appendChild(reviewItem);
+  });
+  
+  // Scroll to review section
+  reviewContainer.scrollIntoView({ behavior: 'smooth' });
+}
+    // Restart the quiz
+    function restartQuiz() {
+      // Reset quiz data
+      quizData.userAnswers = new Array(quizData.questions.length).fill(null);
+      
+      // Hide results card, show quiz card
+      resultsCard.classList.add('d-none');
+      reviewContainer.classList.add('d-none');
+      quizCard.classList.remove('d-none');
+      
+      // Restart timer
+      startTimer();
+      
+      // Show first question
+      showQuestion(0);
+    }
+
+    // Event listeners
+    prevBtn.addEventListener('click', prevQuestion);
+    nextBtn.addEventListener('click', nextQuestion);
+    submitBtn.addEventListener('click', submitQuiz);
+    restartBtn.addEventListener('click', restartQuiz);
+    reviewBtn.addEventListener('click', showReview);
+
+    // Initialize quiz with data from Flask
+    document.addEventListener('DOMContentLoaded', function() {
+      // Try to get quiz data from the global variable set by Flask
+      if (typeof quizQuestions !== 'undefined' && quizQuestions.length > 0) {
+        startQuiz(quizQuestions);
+      } else {
+        // If no data is available, show error
+        showError();
+      }
+    });
+  </script>
+
+  <!-- This script tag will be populated by Flask with the actual quiz data -->
+  <script>
+    // Convert the Flask template variable to a JavaScript variable
+    var quizQuestions = {{ questions | tojson | safe }};
+  </script>
+</body>
+</html>

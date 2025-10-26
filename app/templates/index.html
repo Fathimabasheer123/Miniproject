@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuizGen - AI MCQ Generator</title>
+
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="container">
+      <nav>
+        <a href="/" class="logo">
+          <i class="fas fa-book-open"></i> QuizGen
+        </a>
+        <ul class="nav-links">
+          <li><a href="{{ url_for('auth.index') }}" class="active">Home</a></li>
+          <li><a href="#features">Features</a></li>
+
+          <li><a href="{{ url_for('auth.login') }}" class="btn">login</a></li>
+        </ul>
+        <button class="mobile-menu-btn" aria-label="Toggle navigation menu">
+          <i class="fas fa-bars"></i>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <main>
+    <section class="hero">
+      <div class="container">
+        <h1 class="fade-in">Transform Your Notes into Smart Quizzes</h1>
+        <p class="fade-in delay-1">Upload your study materials and let AI generate  multiple-choice questions to test your knowledge and prepare for exams.</p>
+        <a href="{{ url_for('auth.login') }}" class="fade-in delay-2">
+          <button class="hero-btn">Get Started </button>
+        </a>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features-section" id="features">
+      <div class="container">
+        <h2 class="section-title fade-in">How It Works</h2>
+        <div class="features">
+          <div class="feature fade-in delay-1">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <h3>Upload Notes</h3>
+            <p>Upload PDFs, text files, or PPT with just a few clicks</p>
+          </div>
+          <div class="feature fade-in delay-2">
+            <i class="fas fa-robot"></i>
+            <h3>AI Processing</h3>
+            <p>Our advanced algorithms extract key concepts and generate relevant questions</p>
+          </div>
+          <div class="feature fade-in delay-3">
+            <i class="fas fa-tasks"></i>
+            <h3>Take Quizzes</h3>
+            <p>Test your knowledge with automatically generated MCQs </p>
+          </div>
+          <div class="feature fade-in delay-4">
+            <i class="fas fa-chart-line"></i>
+            <h3>Track Progress</h3>
+            <p>Monitor your performance and improve over time</p>
+          </div>
+        </div>
+      </div>
+    </section>  
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    
+      <p>&copy; 2025 QuizGen. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    // Mobile menu toggle
+    document.querySelector('.mobile-menu-btn').addEventListener('click', () => {
+      document.querySelector('.nav-links').classList.toggle('active');
+      
+      // Change icon when menu is open/closed
+      const icon = document.querySelector('.mobile-menu-btn i');
+      if (icon.classList.contains('fa-bars')) {
+        icon.classList.remove('fa-bars');
+        icon.classList.add('fa-times');
+      } else {
+        icon.classList.remove('fa-times');
+        icon.classList.add('fa-bars');
+      }
+    });
+    
+    // Close menu when clicking on a link
+    document.querySelectorAll('.nav-links a').forEach(link => {
+      link.addEventListener('click', () => {
+        document.querySelector('.nav-links').classList.remove('active');
+        document.querySelector('.mobile-menu-btn i').classList.remove('fa-times');
+        document.querySelector('.mobile-menu-btn i').classList.add('fa-bars');
+      });
+    });
+    
+    // Animation on scroll
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.1
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.animationPlayState = 'running';
+          observer.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+    
+    // Observe all elements with fade-in class
+    document.querySelectorAll('.fade-in').forEach(el => {
+      el.style.animationPlayState = 'paused';
+      observer.observe(el);
+    });
+  </script>
+</body>
+</html>

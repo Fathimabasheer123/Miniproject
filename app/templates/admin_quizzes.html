@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Management - QuizGen Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .system-sidebar { background: linear-gradient(135deg, #2c3e50, #34495e); color: white; min-height: 100vh; padding: 0; }
+        .system-sidebar .nav-link { color: #ecf0f1; padding: 15px 20px; border-left: 4px solid transparent; }
+        .system-sidebar .nav-link:hover, .system-sidebar .nav-link.active { background: rgba(255,255,255,0.1); border-left-color: #3498db; }
+        .quiz-title { max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 system-sidebar">
+                <div class="p-3">
+                    <h4><i class="fas fa-cogs"></i> QuizGen System</h4>
+                    <hr class="bg-light">
+                </div>
+                <ul class="nav flex-column">
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.admin_dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.manage_users') }}"><i class="fas fa-users"></i> User Management</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="{{ url_for('admin.manage_quizzes') }}"><i class="fas fa-file-alt"></i> Quiz Management</a></li>
+                    <!-- <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.analytics') }}"><i class="fas fa-chart-bar"></i> Analytics</a></li> -->
+                    <li class="nav-item mt-4"><a class="nav-link text-warning" href="{{ url_for('admin.exit_admin')  }}"><i class="fas fa-sign-out-alt"></i> Exit Admin</a></li>
+                </ul>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 ml-sm-auto p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2><i class="fas fa-file-alt"></i> Quiz Management</h2>
+                    <div class="text-muted">
+                        <i class="fas fa-user-shield"></i> System Controller
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body">
+                                <h5>{{ quizzes|length }}</h5>
+                                <p>Total Quizzes</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <h5>{{ quizzes|selectattr("attempt_count", "gt", 0)|list|length }}</h5>
+                                <p>Active Quizzes</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body">
+                                <h5>{{ quizzes|selectattr("avg_score", "gt", 80)|list|length }}</h5>
+                                <p>High Performing</p>
+                            </div>
+                        </div>
+                    </div> -->
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body">
+                                <h5>{{ quizzes|selectattr("difficulty", "equalto", "hard")|list|length }}</h5>
+                                <p>Hard Difficulty</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quizzes Table -->
+                <div class="card shadow">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="fas fa-list"></i> All Generated Quizzes</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Quiz Title</th>
+                                        <th>Creator</th>
+                                        <th>Difficulty</th>
+                                        <th>Attempts</th>
+                                        <th>Avg Score</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for quiz in quizzes %}
+                                    <tr>
+                                        <td>
+                                            <div class="quiz-title" title="{{ quiz.title }}">
+                                                {{ quiz.title }}
+                                            </div>
+                                            <small class="text-muted">
+                                                {{ quiz.context[:50] }}{% if quiz.context|length > 50 %}...{% endif %}
+                                            </small>
+                                        </td>
+                                        <td>{{ quiz.username }}</td>
+                                        <td>
+                                            <span class="badge bg-{% if quiz.difficulty == 'easy' %}success{% elif quiz.difficulty == 'medium' %}warning{% else %}danger{% endif %}">
+                                                {{ quiz.difficulty|title }}
+                                            </span>
+                                        </td>
+                                        <td>{{ quiz.attempt_count or 0 }}</td>
+                                        <td>
+                                            <span class="badge bg-{% if quiz.avg_score >= 80 %}success{% elif quiz.avg_score >= 60 %}warning{% else %}danger{% endif %}">
+                                                {{ "%.1f"|format(quiz.avg_score or 0) }}%
+                                            </span>
+                                        </td>
+                                        <td>{{ quiz.generated_at[:10] }}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-danger" 
+                                                    onclick="deleteQuiz({{ quiz.id }}, '{{ quiz.title }}')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if total_pages > 1 %}
+                        <nav>
+                            <ul class="pagination justify-content-center">
+                                {% for p in range(1, total_pages + 1) %}
+                                <li class="page-item {% if p == page %}active{% endif %}">
+                                    <a class="page-link" href="{{ url_for('admin.manage_quizzes', page=p) }}">{{ p }}</a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function deleteQuiz(quizId, quizTitle) {
+            if (confirm(`Are you sure you want to delete quiz "${quizTitle}"? This will also delete all associated questions and attempts.`)) {
+                fetch(`/admin/api/delete_quiz/${quizId}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Quiz deleted successfully!');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    alert('Error deleting quiz: ' + error);
+                });
+            }
+        }
+    </script>
+</body>
+</html>

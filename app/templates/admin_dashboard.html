@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - QuizGen</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .system-sidebar {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            min-height: 100vh;
+            padding: 0;
+        }
+        .system-sidebar .nav-link {
+            color: #ecf0f1;
+            padding: 15px 20px;
+            border-left: 4px solid transparent;
+        }
+        .system-sidebar .nav-link:hover, .system-sidebar .nav-link.active {
+            background: rgba(255,255,255,0.1);
+            border-left-color: #3498db;
+        }
+        .stat-card {
+            border-radius: 10px;
+            transition: transform 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        .bg-gradient-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .bg-gradient-success { background: linear-gradient(135deg, #11998e, #38ef7d); }
+        .bg-gradient-warning { background: linear-gradient(135deg, #f7971e, #ffd200); }
+        .bg-gradient-info { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .chart-container { position: relative; height: 300px; width: 100%; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- System Sidebar -->
+            <div class="col-md-3 col-lg-2 system-sidebar">
+                <div class="p-3">
+                    <h4><i class="fas fa-cogs"></i> QuizGen System</h4>
+                    <hr class="bg-light">
+                </div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('admin.admin_dashboard') }}">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.manage_users') }}">
+                            <i class="fas fa-users"></i> User Management
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.manage_quizzes') }}">
+                            <i class="fas fa-file-alt"></i> Quiz Management
+                        </a>
+                    </li>
+                    <!-- <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.analytics') }}">
+                            <i class="fas fa-chart-bar"></i> Analytics
+                        </a> -->
+                    </li>
+                    <li class="nav-item mt-4">
+                        <a class="nav-link text-warning" href="{{ url_for('admin.exit_admin')  }}">
+                            <i class="fas fa-sign-out-alt"></i> Exit Admin
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 ml-sm-auto p-4">
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2>System Administration</h2>
+                    <div class="text-muted">
+                        <i class="fas fa-user-shield"></i> System Controller
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="row mb-4">
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card stat-card bg-gradient-primary text-white shadow">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-uppercase mb-1">
+                                            Total Users</div>
+                                        <div class="h5 mb-0 font-weight-bold" id="totalUsers">{{ stats.total_users }}</div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-users fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card stat-card bg-gradient-success text-white shadow">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-uppercase mb-1">
+                                            Total Quizzes</div>
+                                        <div class="h5 mb-0 font-weight-bold">{{ stats.total_quizzes }}</div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-file-alt fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card stat-card bg-gradient-warning text-white shadow">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-uppercase mb-1">
+                                            Quiz Attempts</div>
+                                        <div class="h5 mb-0 font-weight-bold">{{ stats.total_attempts }}</div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-tasks fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card stat-card bg-gradient-info text-white shadow">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-uppercase mb-1">
+                                            Active Today</div>
+                                        <div class="h5 mb-0 font-weight-bold">{{ stats.active_today }}</div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-user-clock fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts and Analytics -->
+                <div class="row mb-4">
+                    <!-- Activity Chart -->
+                    <div class="col-lg-6 mb-4">
+                        <div class="card shadow">
+                            <div class="card-header bg-white">
+                                <h6 class="m-0 font-weight-bold text-primary">
+                                    <i class="fas fa-chart-line"></i> Weekly Activity
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="activityChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Usage Stats -->
+                    <div class="col-lg-6 mb-4">
+                        <div class="card shadow">
+                            <div class="card-header bg-white">
+                                <h6 class="m-0 font-weight-bold text-primary">
+                                    <i class="fas fa-robot"></i> AI Usage by Difficulty
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="aiUsageChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="row">
+                    <div class="col-lg-6 mb-4">
+                        <div class="card shadow">
+                            <div class="card-header bg-white">
+                                <h6 class="m-0 font-weight-bold text-primary">
+                                    <i class="fas fa-history"></i> Recent Activity
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>User</th>
+                                                <th>Quiz</th>
+                                                <th>Score</th>
+                                                <th>Time</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for activity in recent_activity %}
+                                            <tr>
+                                                <td>{{ activity.username }}</td>
+                                                <td class="text-truncate" style="max-width: 150px;">{{ activity.title }}</td>
+                                                <td>
+                                                    <span class="badge bg-{{ 'success' if (activity.score/activity.total_questions*100 >= 60) else 'warning' if (activity.score/activity.total_questions*100 >= 40) else 'danger' }}">
+                                                        {{ "%.1f"|format(activity.score/activity.total_questions*100) }}%
+                                                    </span>
+                                                </td>
+                                                <td>{{ activity.completed_at[:16] }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Popular Topics -->
+                    <div class="col-lg-6 mb-4">
+                        <div class="card shadow">
+                            <div class="card-header bg-white">
+                                <h6 class="m-0 font-weight-bold text-primary">
+                                    <i class="fas fa-chart-line"></i> Popular Quizzes
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Quiz Title</th>
+                                                <th>Attempts</th>
+                                                <th>Avg Score</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for topic in popular_topics %}
+                                            <tr>
+                                                <td class="text-truncate" style="max-width: 200px;">{{ topic.title }}</td>
+                                                <td>{{ topic.attempt_count }}</td>
+                                                <td>{{ "%.1f"|format(topic.avg_score or 0) }}%</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Activity Chart
+        const activityCtx = document.getElementById('activityChart').getContext('2d');
+        const activityChart = new Chart(activityCtx, {
+            type: 'line',
+            data: {
+                labels: [{% for activity in daily_activity %}'{{ activity.date[5:] }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+                datasets: [{
+                    label: 'Quiz Attempts',
+                    data: [{% for activity in daily_activity %}{{ activity.attempts }}{% if not loop.last %}, {% endif %}{% endfor %}],
+                    borderColor: '#36a2eb',
+                    backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // AI Usage Chart
+        const aiCtx = document.getElementById('aiUsageChart').getContext('2d');
+        const aiChart = new Chart(aiCtx, {
+            type: 'doughnut',
+            data: {
+                labels: [{% for usage in ai_usage %}'{{ usage.difficulty|title }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+                datasets: [{
+                    data: [{% for usage in ai_usage %}{{ usage.count }}{% if not loop.last %}, {% endif %}{% endfor %}],
+                    backgroundColor: ['#4bc0c0', '#ffcd56', '#ff6384', '#36a2eb', '#ff9f40'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        // Live stats update
+        function updateLiveStats() {
+            fetch('/admin/api/stats')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Live stats updated:', data);
+                });
+        }
+
+        // Update every 30 seconds
+        setInterval(updateLiveStats, 30000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - QuizGen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #334155;
+        }
+        
+        .quizgen-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 700;
+            color: #ffffff;
+            text-decoration: none;
+            margin-bottom: 30px;
+        }
+        
+        .quizgen-logo i {
+            margin-right: 10px;
+            font-size: 32px;
+        }
+        
+        .admin-login-container {
+            width: 100%;
+            max-width: 450px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        .admin-login-header {
+            background: linear-gradient(90deg, #2c3e50, #34495e);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .admin-login-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #e74c3c, #f39c12, #2ecc71, #3498db);
+        }
+        
+        .admin-login-header h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .admin-login-header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .admin-login-form {
+            padding: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        .input-with-icon {
+            position: relative;
+        }
+        
+        .input-with-icon i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+        }
+        
+        .input-with-icon input {
+            width: 100%;
+            padding: 14px 14px 14px 45px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .input-with-icon input:focus {
+            outline: none;
+            border-color: #2c3e50;
+            box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.1);
+        }
+        
+        .error-message {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .error-message i {
+            font-size: 18px;
+        }
+        
+        .admin-login-btn {
+            width: 100%;
+            background: linear-gradient(90deg, #2c3e50, #34495e);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+            box-shadow: 0 4px 6px rgba(44, 62, 80, 0.2);
+        }
+        
+        .admin-login-btn:hover {
+            background: linear-gradient(90deg, #34495e, #2c3e50);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(44, 62, 80, 0.3);
+        }
+        
+        .back-to-user-login {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .back-to-user-login a {
+            color: #2c3e50;
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.3s;
+        }
+        
+        .back-to-user-login a:hover {
+            color: #34495e;
+            text-decoration: underline;
+        }
+        
+        .admin-credentials-hint {
+            background-color: #e8f4fd;
+            border: 1px solid #b3e0ff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #2c3e50;
+        }
+        
+        .admin-credentials-hint strong {
+            color: #e74c3c;
+        }
+        
+        @media (max-width: 480px) {
+            .admin-login-container {
+                border-radius: 12px;
+            }
+            
+            .admin-login-header {
+                padding: 25px 20px;
+            }
+            
+            .admin-login-form {
+                padding: 25px 20px;
+            }
+            
+            .quizgen-logo {
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- QuizGen Logo -->
+    <a href="{{ url_for('auth.index') }}" class="quizgen-logo">
+        <i class="fas fa-book-open"></i> QuizGen Admin
+    </a>
+    
+    <div class="admin-login-container">
+        <div class="admin-login-header">
+            <h2><i class="fas fa-shield-alt"></i> Admin Portal</h2>
+            <p>Administrator Access Only</p>
+        </div>
+        
+        <div class="admin-login-form">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="error-message">
+                            <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }}"></i>
+                            <span>{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('auth.admin_login') }}">
+                <div class="form-group">
+                    <label for="username">Admin Username</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-user-shield"></i>
+                        <input type="text" id="username" name="username" placeholder="Enter admin username" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Admin Password</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="password" name="password" placeholder="Enter admin password" required>
+                    </div>
+                </div>
+                
+                <button type="submit" class="admin-login-btn">
+                    <i class="fas fa-sign-in-alt"></i> Admin Login
+                </button>
+            </form>
+            
+            <!-- Admin Credentials Hint (Remove in production) -->
+            <div class="admin-credentials-hint">
+                <strong>Development Hint:</strong><br>
+                Default Admin: <code>admin</code> / <code>admin123</code>
+            </div>
+            
+            <div class="back-to-user-login">
+                <a href="{{ url_for('auth.login') }}">
+                    <i class="fas fa-arrow-left"></i> Back to User Login
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
